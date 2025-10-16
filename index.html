@@ -201,7 +201,8 @@
   #selectorTerritorios,
   #btnAreaGrande,
   #btnMostrarTodasNotas,
-  #btnTerritoriosTerminados {
+  #btnTerritoriosTerminados,
+  #backupBtn {
     padding: 1.0vh 1vw;
     font-size: 0.8vw;
     font-weight: bold;
@@ -233,7 +234,7 @@
   #selectorTerritorios:hover,
   #btnAreaGrande:hover,
   #btnMostrarTodasNotas:hover,
-  #btnTerritoriosTerminados:hover {
+  #btnTerritoriosTerminados:hover #backupBtn:hover {
     background-color: #ffffff;
     color: #1f1e1e;
     border-color: #444;
@@ -243,7 +244,8 @@
   #selectorTerritorios:active,
   #btnAreaGrande:active,
   #btnMostrarTodasNotas:active,
-  #btnTerritoriosTerminados:active {
+  #btnTerritoriosTerminados:active,
+  #backupBtn:active {
     transform: scale(0.97);
     background-color: #222;
     color: #fff;
@@ -433,6 +435,9 @@
     <button id="btnAreaGrande">Área Grande</button>
     <button id="btnMostrarTodasNotas">Notas</button>
     <button id="btnTerritoriosTerminados">Territorios terminados</button>
+    <button id="backupBtn" style="position: fixed; left: 10px; bottom: 10px; padding: 10px; z-index: 9999;">
+      Copia de Seguridad
+    </button>
     <!--QUITE EL BOTON DE EXPORTAR EXCEL PARA INTEGRARLO AL POP UP-->
     <select id="filtroMes" onchange="filtrarPorMes()">
       <option value="inicio">Inicio</option>
@@ -508,6 +513,69 @@
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const backupBtn = document.getElementById('backupBtn');
+
+      backupBtn.addEventListener('click', () => {
+        // Convertir todo el localStorage a JSON
+        const data = JSON.stringify(localStorage, null, 2);
+
+        // Crear nombre con la fecha actual
+        const fecha = new Date();
+        const nombreArchivo = `Territorios ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
+
+        // Crear blob y enlace para descarga
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // === POPUP BONITO ===
+        const popup = document.createElement('div');
+        popup.textContent = 'Copia de seguridad descargada ✅';
+        popup.style.position = 'fixed';
+        popup.style.bottom = '20px';
+        popup.style.left = '50%';
+        popup.style.transform = 'translateX(-50%)';
+        popup.style.background = '#28a745';
+        popup.style.color = '#fff';
+        popup.style.padding = '12px 20px';
+        popup.style.borderRadius = '8px';
+        popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+        popup.style.zIndex = 99999;
+        popup.style.fontFamily = 'sans-serif';
+        popup.style.fontSize = '14px';
+        popup.style.opacity = '0';
+        popup.style.transition = 'opacity 0.3s ease';
+
+        document.body.appendChild(popup);
+
+        // Animar entrada
+        setTimeout(() => { popup.style.opacity = '1'; }, 10);
+
+        // Desaparece después de 3 segundos
+        setTimeout(() => {
+          popup.style.opacity = '0';
+          setTimeout(() => document.body.removeChild(popup), 300);
+        }, 3000);
+      });
+    });
+  </script>
+
+
+
+
+
+
 
 
 
@@ -1529,10 +1597,6 @@
     document.getElementById("cerrarModal").addEventListener("click", () => {
       document.body.removeChild(modal);
     });
-
-
-
-
 
 
 
