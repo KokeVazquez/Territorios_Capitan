@@ -564,15 +564,17 @@
 
           document.body.removeChild(popup); // cerrar popup
 
-          if (/android/i.test(ua)) {
-            // Android: abrir en la app si se puede
-            window.location.href = driveFolder;
-          } else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
-            // iOS: abrir en nueva pestaña, el sistema sugerirá abrir app
-            window.open(driveFolder, '_blank');
+          const driveFolderWeb = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+          const driveFolderApp = 'googledrive://folder/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+
+          if (/android/i.test(ua) || (/iPad|iPhone|iPod/.test(ua) && !window.MSStream)) {
+            // Intentar abrir la app
+            window.location.href = driveFolderApp;
+            // Fallback al web si la app no abre
+            setTimeout(() => { window.open(driveFolderWeb, '_blank'); }, 1000);
           } else {
-            // Escritorio: abrir en nueva pestaña
-            window.open(driveFolder, '_blank');
+            // Escritorio
+            window.open(driveFolderWeb, '_blank');
           }
         });
 
