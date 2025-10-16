@@ -1443,28 +1443,56 @@
     // === BLOQUE: Filtrar al elegir mes (PC + móviles) ===
     // ================================
 
-    // Obtener el selector de mes
     const filtroMes = document.getElementById("filtroMes");
-    let lastTap = 0;
 
     if (filtroMes) {
-      // filtrado normal
+      // Filtrado normal al cambiar selección
       filtroMes.addEventListener("change", filtrarPorMes);
 
-      // detectar doble clic / doble tap
-      filtroMes.addEventListener("click", () => {
+      // PC: click derecho sobre el selector reinicia al inicio
+      filtroMes.addEventListener("contextmenu", (e) => {
+        e.preventDefault(); // evitar menú contextual
+        filtroMes.value = "inicio";
+        filtrarPorMes();
+      });
+
+      // PC: doble clic para reiniciar
+      filtroMes.addEventListener("dblclick", () => {
+        filtroMes.value = "inicio";
+        filtrarPorMes();
+      });
+
+      // PC: presionar largo para reiniciar
+      let pressTimer;
+      filtroMes.addEventListener("mousedown", () => {
+        pressTimer = setTimeout(() => {
+          filtroMes.value = "inicio";
+          filtrarPorMes();
+        }, 800); // tiempo en ms para presionar largo
+      });
+      filtroMes.addEventListener("mouseup", () => clearTimeout(pressTimer));
+      filtroMes.addEventListener("mouseleave", () => clearTimeout(pressTimer));
+
+      // Móvil: detectar doble tap para reiniciar
+      let lastTap = 0;
+      filtroMes.addEventListener("touchend", (e) => {
         const now = new Date().getTime();
         const tapLength = now - lastTap;
         if (tapLength < 500 && tapLength > 0) {
-          // doble tap detectado
-          filtroMes.value = "inicio";  // reinicia al valor inicial
+          filtroMes.value = "inicio";
           filtrarPorMes();
         }
         lastTap = now;
       });
+
+      // Para compatibilidad con algunos navegadores que no disparan change al tocar
+      filtroMes.addEventListener("input", filtrarPorMes);
     }
+    es.addEventListener("input", filtrarPorMes);
 
     // ================================================================================================================================//
+
+
 
 
 
