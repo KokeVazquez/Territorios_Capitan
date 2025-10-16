@@ -520,17 +520,13 @@
       const backupBtn = document.getElementById('backupBtn');
 
       backupBtn.addEventListener('click', () => {
-        // Convertir todo el localStorage a JSON
+        // === Descargar copia de seguridad ===
         const data = JSON.stringify(localStorage, null, 2);
-
-        // Crear nombre con la fecha actual
         const fecha = new Date();
         const nombreArchivo = `Territorios ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
 
-        // Crear blob y enlace para descarga
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
-
         const a = document.createElement('a');
         a.href = url;
         a.download = nombreArchivo;
@@ -539,38 +535,46 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        // Popup bonito
+        // === Abrir carpeta de Drive según dispositivo ===
+        const driveFolder = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+
+        if (/android/i.test(ua)) {
+          // Android: abrir app o web según disponibilidad
+          window.location.href = driveFolder;
+        } else if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) {
+          // iOS: abrir web, que puede sugerir abrir app
+          window.open(driveFolder, '_blank');
+        } else {
+          // Escritorio: abrir en nueva pestaña
+          window.open(driveFolder, '_blank');
+        }
+
+        // === Mostrar popup bonito ===
         const popup = document.createElement('div');
+        popup.textContent = 'Copia de seguridad descargada ✅\nSe abrió tu carpeta de Drive';
         popup.style.position = 'fixed';
-        popup.style.top = '50%';
+        popup.style.bottom = '20px';
         popup.style.left = '50%';
-        popup.style.transform = 'translate(-50%, -50%)';
-        popup.style.backgroundColor = '#fff';
-        popup.style.padding = '20px';
+        popup.style.transform = 'translateX(-50%)';
+        popup.style.background = '#007bff';
+        popup.style.color = '#fff';
+        popup.style.padding = '15px 25px';
         popup.style.borderRadius = '10px';
-        popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
-        popup.style.zIndex = 9999;
-        popup.innerHTML = `
-      <p>Copia de seguridad descargada ✅</p>
-      <button id="abrirDrive" style="padding:10px 15px; background:#4285F4; color:#fff; border:none; border-radius:5px; cursor:pointer;">
-        Abrir Google Drive
-      </button>
-      <button id="cerrarPopup" style="margin-left:10px; padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
-        Cerrar
-      </button>
-    `;
+        popup.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+        popup.style.fontSize = '16px';
+        popup.style.textAlign = 'center';
+        popup.style.zIndex = 10000;
         document.body.appendChild(popup);
 
-        document.getElementById('abrirDrive').addEventListener('click', () => {
-          document.body.removeChild(popup); // cerrar popup
-          window.open('https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N?usp=sharing', '_blank');
-        });
-
-        document.getElementById('cerrarPopup').addEventListener('click', () => {
-          document.body.removeChild(popup);
-        });
+        // Desaparecer después de 3 segundos
+        setTimeout(() => {
+          popup.remove();
+        }, 3000);
       });
     });
+
 
 
   </script>
