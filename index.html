@@ -539,7 +539,7 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        // Popup bonito (ejemplo simple)
+        // Popup bonito
         const popup = document.createElement('div');
         popup.style.position = 'fixed';
         popup.style.top = '50%';
@@ -562,7 +562,8 @@
         document.body.appendChild(popup);
 
         document.getElementById('abrirDrive').addEventListener('click', () => {
-          window.open('https://drive.google.com/drive/my-drive', '_blank');
+          document.body.removeChild(popup); // cerrar popup
+          window.open('https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N?usp=sharing', '_blank');
         });
 
         document.getElementById('cerrarPopup').addEventListener('click', () => {
@@ -570,6 +571,7 @@
         });
       });
     });
+
 
   </script>
 
