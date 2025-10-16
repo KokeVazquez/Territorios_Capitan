@@ -1443,56 +1443,42 @@
     // === BLOQUE: Filtrar al elegir mes (PC + móviles) ===
     // ================================
 
+    // Obtener el selector de mes
     const filtroMes = document.getElementById("filtroMes");
 
     if (filtroMes) {
-      // Filtrado normal al cambiar selección
+      // Ejecutar filtrado inmediatamente al cambiar valor (útil en móviles)
+      filtroMes.addEventListener("input", filtrarPorMes);
+      // Ejecutar filtrado al confirmar selección (compatibilidad con PC)
       filtroMes.addEventListener("change", filtrarPorMes);
 
-      // PC: click derecho sobre el selector reinicia al inicio
+      // === PC: clic derecho sobre el selector reinicia al inicio ===
       filtroMes.addEventListener("contextmenu", (e) => {
         e.preventDefault(); // evitar menú contextual
-        filtroMes.value = "inicio";
+        filtroMes.value = "inicio"; // reinicia
         filtrarPorMes();
       });
 
-      // PC: doble clic para reiniciar
-      filtroMes.addEventListener("dblclick", () => {
-        filtroMes.value = "inicio";
-        filtrarPorMes();
-      });
+      // === Móvil: detectar presionar largo para reiniciar ===
+      let touchTimer = null;
+      const longPressDuration = 600; // ms que hay que mantener presionado
 
-      // PC: presionar largo para reiniciar
-      let pressTimer;
-      filtroMes.addEventListener("mousedown", () => {
-        pressTimer = setTimeout(() => {
-          filtroMes.value = "inicio";
+      filtroMes.addEventListener("touchstart", (e) => {
+        touchTimer = setTimeout(() => {
+          filtroMes.value = "inicio"; // reinicia
           filtrarPorMes();
-        }, 800); // tiempo en ms para presionar largo
+        }, longPressDuration);
       });
-      filtroMes.addEventListener("mouseup", () => clearTimeout(pressTimer));
-      filtroMes.addEventListener("mouseleave", () => clearTimeout(pressTimer));
 
-      // Móvil: detectar doble tap para reiniciar
-      let lastTap = 0;
       filtroMes.addEventListener("touchend", (e) => {
-        const now = new Date().getTime();
-        const tapLength = now - lastTap;
-        if (tapLength < 500 && tapLength > 0) {
-          filtroMes.value = "inicio";
-          filtrarPorMes();
+        if (touchTimer) {
+          clearTimeout(touchTimer); // si soltó antes, cancelar reinicio
+          touchTimer = null;
         }
-        lastTap = now;
       });
-
-      // Para compatibilidad con algunos navegadores que no disparan change al tocar
-      filtroMes.addEventListener("input", filtrarPorMes);
     }
-    es.addEventListener("input", filtrarPorMes);
 
     // ================================================================================================================================//
-
-
 
 
 
