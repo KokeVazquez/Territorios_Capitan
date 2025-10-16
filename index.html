@@ -520,13 +520,17 @@
       const backupBtn = document.getElementById('backupBtn');
 
       backupBtn.addEventListener('click', () => {
-        // === Descargar copia de seguridad ===
+        // Convertir todo el localStorage a JSON
         const data = JSON.stringify(localStorage, null, 2);
+
+        // Crear nombre con la fecha actual
         const fecha = new Date();
         const nombreArchivo = `Territorios ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
 
+        // Crear blob y enlace para descarga
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
+
         const a = document.createElement('a');
         a.href = url;
         a.download = nombreArchivo;
@@ -535,7 +539,7 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        // === Popup bonito ===
+        // Popup bonito
         const popup = document.createElement('div');
         popup.style.position = 'fixed';
         popup.style.top = '50%';
@@ -547,7 +551,7 @@
         popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
         popup.style.zIndex = 9999;
         popup.innerHTML = `
-      <p style="margin-bottom:15px;">Copia de seguridad descargada ✅</p>
+      <p>Copia de seguridad descargada ✅</p>
       <button id="abrirDrive" style="padding:10px 15px; background:#4285F4; color:#fff; border:none; border-radius:5px; cursor:pointer;">
         Abrir Google Drive
       </button>
@@ -557,23 +561,19 @@
     `;
         document.body.appendChild(popup);
 
-        // === Detectar dispositivo y abrir Drive al picarle ===
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const driveFolderWeb = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+        const driveFolderApp = 'googledrive://folder/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+
         document.getElementById('abrirDrive').addEventListener('click', () => {
-          const driveFolder = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-          const ua = navigator.userAgent || navigator.vendor || window.opera;
-
           document.body.removeChild(popup); // cerrar popup
-
-          const driveFolderWeb = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-          const driveFolderApp = 'googledrive://folder/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-
           if (/android/i.test(ua) || (/iPad|iPhone|iPod/.test(ua) && !window.MSStream)) {
-            // Intentar abrir la app
+            // Intentar abrir app
             window.location.href = driveFolderApp;
-            // Fallback al web si la app no abre
+            // Fallback al navegador después de 1 segundo si no hay app
             setTimeout(() => { window.open(driveFolderWeb, '_blank'); }, 1000);
           } else {
-            // Escritorio
+            // PC
             window.open(driveFolderWeb, '_blank');
           }
         });
@@ -583,9 +583,6 @@
         });
       });
     });
-
-
-
   </script>
 
 
