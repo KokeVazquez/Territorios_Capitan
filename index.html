@@ -438,6 +438,11 @@
     <button id="backupBtn" style="position: fixed; left: 10px; bottom: 10px; padding: 10px; z-index: 9999;">
       Copia de Seguridad
     </button>
+    <input type="file" id="restoreFile" accept=".json" style="display:none;" />
+    <button id="restoreBtn"
+      style="position: fixed; left: 10px; bottom: 60px; padding: 10px; z-index: 9999; background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer;">
+      Restaurar Copia
+    </button>
     <!--QUITE EL BOTON DE EXPORTAR EXCEL PARA INTEGRARLO AL POP UP-->
     <select id="filtroMes" onchange="filtrarPorMes()">
       <option value="inicio">Inicio</option>
@@ -513,80 +518,6 @@
   <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
   <script src="https://unpkg.com/@turf/turf/turf.min.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const backupBtn = document.getElementById('backupBtn');
-
-      backupBtn.addEventListener('click', () => {
-        // Convertir todo el localStorage a JSON
-        const data = JSON.stringify(localStorage, null, 2);
-
-        // Crear nombre con la fecha actual
-        const fecha = new Date();
-        const nombreArchivo = `Territorios ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
-
-        // Crear blob y enlace para descarga
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nombreArchivo;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        // Popup bonito
-        const popup = document.createElement('div');
-        popup.style.position = 'fixed';
-        popup.style.top = '50%';
-        popup.style.left = '50%';
-        popup.style.transform = 'translate(-50%, -50%)';
-        popup.style.backgroundColor = '#fff';
-        popup.style.padding = '20px';
-        popup.style.borderRadius = '10px';
-        popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
-        popup.style.zIndex = 9999;
-        popup.innerHTML = `
-      <p>Copia de seguridad descargada ✅</p>
-      <button id="abrirDrive" style="padding:10px 15px; background:#4285F4; color:#fff; border:none; border-radius:5px; cursor:pointer;">
-        Abrir Google Drive
-      </button>
-      <button id="cerrarPopup" style="margin-left:10px; padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
-        Cerrar
-      </button>
-    `;
-        document.body.appendChild(popup);
-
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const driveFolderWeb = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-        const driveFolderApp = 'googledrive://folder/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-
-        document.getElementById('abrirDrive').addEventListener('click', () => {
-          document.body.removeChild(popup); // cerrar popup
-          if (/android/i.test(ua) || (/iPad|iPhone|iPod/.test(ua) && !window.MSStream)) {
-            // Intentar abrir app
-            window.location.href = driveFolderApp;
-            // Fallback al navegador después de 1 segundo si no hay app
-            setTimeout(() => { window.open(driveFolderWeb, '_blank'); }, 1000);
-          } else {
-            // PC
-            window.open(driveFolderWeb, '_blank');
-          }
-        });
-
-        document.getElementById('cerrarPopup').addEventListener('click', () => {
-          document.body.removeChild(popup);
-        });
-      });
-    });
-  </script>
-
-
-
 
 
 
@@ -1616,13 +1547,109 @@
 
 
 
+  </script>
 
 
 
 
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const backupBtn = document.getElementById('backupBtn');
+      const restoreBtn = document.getElementById('restoreBtn');
+      const restoreFile = document.getElementById('restoreFile');
 
+      // ====================
+      // COPIA DE SEGURIDAD
+      // ====================
+      backupBtn.addEventListener('click', () => {
+        const data = JSON.stringify(localStorage, null, 2);
+        const fecha = new Date();
+        const nombreArchivo = `Territorios ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
 
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
 
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        // Popup bonito
+        const popup = document.createElement('div');
+        popup.style.position = 'fixed';
+        popup.style.top = '50%';
+        popup.style.left = '50%';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.backgroundColor = '#fff';
+        popup.style.padding = '20px';
+        popup.style.borderRadius = '10px';
+        popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+        popup.style.zIndex = 9999;
+        popup.innerHTML = `
+      <p>Copia de seguridad descargada ✅</p>
+      <button id="abrirDrive" style="padding:10px 15px; background:#4285F4; color:#fff; border:none; border-radius:5px; cursor:pointer;">
+        Abrir Google Drive
+      </button>
+      <button id="cerrarPopup" style="margin-left:10px; padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
+        Cerrar
+      </button>
+    `;
+        document.body.appendChild(popup);
+
+        const ua = navigator.userAgent || navigator.vendor || window.opera;
+        const driveFolderWeb = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+        const driveFolderApp = 'googledrive://folder/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
+
+        document.getElementById('abrirDrive').addEventListener('click', () => {
+          document.body.removeChild(popup); // cerrar popup
+          if (/android/i.test(ua) || (/iPad|iPhone|iPod/.test(ua) && !window.MSStream)) {
+            // Intentar abrir app
+            window.location.href = driveFolderApp;
+            // Fallback al navegador después de 1 segundo si no hay app
+            setTimeout(() => { window.open(driveFolderWeb, '_blank'); }, 1000);
+          } else {
+            // PC
+            window.open(driveFolderWeb, '_blank');
+          }
+        });
+
+        document.getElementById('cerrarPopup').addEventListener('click', () => {
+          document.body.removeChild(popup);
+        });
+      });
+
+      // ====================
+      // RESTAURAR COPIA
+      // ====================
+      restoreBtn.addEventListener('click', () => {
+        restoreFile.click();
+      });
+
+      restoreFile.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (event) {
+          try {
+            const data = JSON.parse(event.target.result);
+            localStorage.clear();
+            for (const key in data) {
+              localStorage.setItem(key, data[key]);
+            }
+            alert('Copia de seguridad restaurada ✅');
+            location.reload();
+          } catch (err) {
+            alert('Error al restaurar el archivo. Asegúrate de que sea la copia correcta.');
+          }
+        };
+        reader.readAsText(file);
+      });
+
+    });
   </script>
 
 
