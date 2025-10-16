@@ -539,36 +539,38 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        // === POPUP BONITO ===
+        // Popup bonito (ejemplo simple)
         const popup = document.createElement('div');
-        popup.textContent = 'Copia de seguridad descargada ✅';
         popup.style.position = 'fixed';
-        popup.style.bottom = '20px';
+        popup.style.top = '50%';
         popup.style.left = '50%';
-        popup.style.transform = 'translateX(-50%)';
-        popup.style.background = '#28a745';
-        popup.style.color = '#fff';
-        popup.style.padding = '12px 20px';
-        popup.style.borderRadius = '8px';
+        popup.style.transform = 'translate(-50%, -50%)';
+        popup.style.backgroundColor = '#fff';
+        popup.style.padding = '20px';
+        popup.style.borderRadius = '10px';
         popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
-        popup.style.zIndex = 99999;
-        popup.style.fontFamily = 'sans-serif';
-        popup.style.fontSize = '14px';
-        popup.style.opacity = '0';
-        popup.style.transition = 'opacity 0.3s ease';
-
+        popup.style.zIndex = 9999;
+        popup.innerHTML = `
+      <p>Copia de seguridad descargada ✅</p>
+      <button id="abrirDrive" style="padding:10px 15px; background:#4285F4; color:#fff; border:none; border-radius:5px; cursor:pointer;">
+        Abrir Google Drive
+      </button>
+      <button id="cerrarPopup" style="margin-left:10px; padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
+        Cerrar
+      </button>
+    `;
         document.body.appendChild(popup);
 
-        // Animar entrada
-        setTimeout(() => { popup.style.opacity = '1'; }, 10);
+        document.getElementById('abrirDrive').addEventListener('click', () => {
+          window.open('https://drive.google.com/drive/my-drive', '_blank');
+        });
 
-        // Desaparece después de 3 segundos
-        setTimeout(() => {
-          popup.style.opacity = '0';
-          setTimeout(() => document.body.removeChild(popup), 300);
-        }, 3000);
+        document.getElementById('cerrarPopup').addEventListener('click', () => {
+          document.body.removeChild(popup);
+        });
       });
     });
+
   </script>
 
 
