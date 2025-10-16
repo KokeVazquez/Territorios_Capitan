@@ -448,7 +448,7 @@
     </button>
     <!--QUITE EL BOTON DE EXPORTAR EXCEL PARA INTEGRARLO AL POP UP-->
     <select id="filtroMes" onchange="filtrarPorMes()">
-      <option value="inicio">Inicio</option>
+      <option value="inicio">Mes</option>
       <option value="todos">Todos los meses</option>
       <option value="01">Enero</option>
       <option value="02">Febrero</option>
@@ -1445,12 +1445,25 @@
 
     // Obtener el selector de mes
     const filtroMes = document.getElementById("filtroMes");
+    let lastTap = 0;
+
     if (filtroMes) {
-      // Ejecutar filtrado inmediatamente al cambiar valor (útil en móviles)
-      filtroMes.addEventListener("input", filtrarPorMes);
-      // Ejecutar filtrado al confirmar selección (compatibilidad con PC)
+      // filtrado normal
       filtroMes.addEventListener("change", filtrarPorMes);
+
+      // detectar doble clic / doble tap
+      filtroMes.addEventListener("click", () => {
+        const now = new Date().getTime();
+        const tapLength = now - lastTap;
+        if (tapLength < 500 && tapLength > 0) {
+          // doble tap detectado
+          filtroMes.value = "inicio";  // reinicia al valor inicial
+          filtrarPorMes();
+        }
+        lastTap = now;
+      });
     }
+
     // ================================================================================================================================//
 
 
@@ -1565,22 +1578,7 @@
       // COPIA DE SEGURIDAD
       // ====================
       backupBtn.addEventListener('click', () => {
-        const data = JSON.stringify(localStorage, null, 2);
-        const fecha = new Date();
-        const nombreArchivo = `Territorios ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
-
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = nombreArchivo;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        // Popup bonito
+        // Popup para pedir nombre y fecha
         const popup = document.createElement('div');
         popup.style.position = 'fixed';
         popup.style.top = '50%';
@@ -1592,35 +1590,67 @@
         popup.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
         popup.style.zIndex = 9999;
         popup.innerHTML = `
-      <p>Copia de seguridad descargada ✅</p>
-      <button id="abrirDrive" style="padding:10px 15px; background:#4285F4; color:#fff; border:none; border-radius:5px; cursor:pointer;">
-        Abrir Google Drive
-      </button>
-      <button id="cerrarPopup" style="margin-left:10px; padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
-        Cerrar
-      </button>
+      <p>Registrar copia de seguridad</p>
+      <label>Nombre: <input type="text" id="backupName" placeholder="Nombre de copia de seguridad"></label><br><br>
+      <label>Fecha: <input type="date" id="backupDate"></label><br><br>
+      <button id="confirmBackup" style="padding:10px 15px; background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer;">Guardar</button>
+      <button id="cancelBackup" style="padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">Cancelar</button>
     `;
         document.body.appendChild(popup);
 
-        const ua = navigator.userAgent || navigator.vendor || window.opera;
-        const driveFolderWeb = 'https://drive.google.com/drive/folders/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-        const driveFolderApp = 'googledrive://folder/1-aei0PlQpS-OnbcblvWIbWDUfsvJAs5N';
-
-        document.getElementById('abrirDrive').addEventListener('click', () => {
-          document.body.removeChild(popup); // cerrar popup
-          if (/android/i.test(ua) || (/iPad|iPhone|iPod/.test(ua) && !window.MSStream)) {
-            // Intentar abrir app
-            window.location.href = driveFolderApp;
-            // Fallback al navegador después de 1 segundo si no hay app
-            setTimeout(() => { window.open(driveFolderWeb, '_blank'); }, 1000);
-          } else {
-            // PC
-            window.open(driveFolderWeb, '_blank');
-          }
+        // Cancelar
+        document.getElementById('cancelBackup').addEventListener('click', () => {
+          document.body.removeChild(popup);
         });
 
-        document.getElementById('cerrarPopup').addEventListener('click', () => {
+        // Confirmar
+        document.getElementById('confirmBackup').addEventListener('click', () => {
+          const nombre = document.getElementById('backupName').value.trim() || 'Copia';
+          const fechaInput = document.getElementById('backupDate').value;
+          let fecha = new Date();
+          if (fechaInput) {
+            fecha = new Date(fechaInput);
+          }
+
+          const nombreArchivo = `${nombre} ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
+
+          // Convertir localStorage a JSON y descargar
+          const data = JSON.stringify(localStorage, null, 2);
+          const blob = new Blob([data], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = nombreArchivo;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
           document.body.removeChild(popup);
+
+          // Popup bonito post-descarga
+          const popup2 = document.createElement('div');
+          popup2.style.position = 'fixed';
+          popup2.style.top = '50%';
+          popup2.style.left = '50%';
+          popup2.style.transform = 'translate(-50%, -50%)';
+          popup2.style.backgroundColor = '#fff';
+          popup2.style.padding = '20px';
+          popup2.style.borderRadius = '10px';
+          popup2.style.boxShadow = '0 5px 15px rgba(0,0,0,0.3)';
+          popup2.style.zIndex = 9999;
+          popup2.innerHTML = `
+        <p>Copia de seguridad "${nombreArchivo}" descargada ✅</p>
+        <button id="cerrarPopup2" style="padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
+          Cerrar
+        </button>
+      `;
+          document.body.appendChild(popup2);
+
+          document.getElementById('cerrarPopup2').addEventListener('click', () => {
+            document.body.removeChild(popup2);
+          });
         });
       });
 
@@ -1654,6 +1684,8 @@
 
     });
   </script>
+
+
 
 
 
