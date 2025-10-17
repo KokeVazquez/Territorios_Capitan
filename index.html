@@ -1974,6 +1974,8 @@
 
     function initCustomSelect(customId, originalId, callback) {
       const customSelect = document.getElementById(customId);
+      if (!customSelect) return;
+
       const selected = customSelect.querySelector(".selected");
       const options = customSelect.querySelectorAll(".options li");
       const originalSelect = document.getElementById(originalId);
@@ -1981,7 +1983,7 @@
       // Abrir/cerrar el select al hacer click
       selected.addEventListener("click", (e) => {
         e.stopPropagation();
-        closeAllCustomSelects(customSelect); // Cierra los demás antes de abrir
+        closeAllCustomSelects(customSelect);
         customSelect.classList.toggle("active");
       });
 
@@ -1993,7 +1995,7 @@
           selected.textContent = opt.textContent;
           originalSelect.value = value;
           customSelect.classList.remove("active");
-          callback(value); // Llama la función asociada (filtrarPorMes o cambiarTerritorio)
+          callback(value);
         });
       });
 
@@ -2004,15 +2006,31 @@
       }, { passive: false });
     }
 
-    // Cerrar todos los selects al hacer click fuera
+    // ====================
+    // FUNCION PARA CERRAR TODOS LOS SELECTS
+    // ====================
+
     function closeAllCustomSelects(exception = null) {
       document.querySelectorAll(".custom-select").forEach(sel => {
         if (sel !== exception) sel.classList.remove("active");
       });
     }
 
-    document.addEventListener("click", () => closeAllCustomSelects());
-    document.addEventListener("touchstart", () => closeAllCustomSelects());
+    // ====================
+    // CERRAR AL HACER CLICK FUERA
+    // ====================
+
+    // Cerramos solo si el click NO ocurrió dentro de ningún custom select
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".custom-select")) {
+        closeAllCustomSelects();
+      }
+    });
+    document.addEventListener("touchstart", (e) => {
+      if (!e.target.closest(".custom-select")) {
+        closeAllCustomSelects();
+      }
+    });
 
     // ====================
     // INICIALIZACIÓN
@@ -2020,6 +2038,7 @@
 
     initCustomSelect("customFiltroMes", "filtroMes", filtrarPorMes);
     initCustomSelect("customSelectorTerritorios", "selectorTerritorios", cambiarTerritorio);
+
 
 
 
