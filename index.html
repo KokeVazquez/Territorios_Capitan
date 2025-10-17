@@ -224,12 +224,17 @@
     padding: 0;
     box-sizing: border-box;
 
-    /* Animación suave */
+    transition: all 0.2s ease;
     opacity: 0;
-    transform: translateY(-10px);
-    transition: all 0.25s ease-in-out;
+    transform: scaleY(0.8);
+    transform-origin: top;
     pointer-events: none;
-    /* deshabilita clicks mientras está cerrado */
+  }
+
+  .custom-select.active .options {
+    opacity: 1;
+    transform: scaleY(1);
+    pointer-events: auto;
   }
 
   .custom-select.active .options {
@@ -1964,136 +1969,60 @@
 
 
     // ====================
-    // FUNCION PARA EL SELECT MES
+    // FUNCION GENERAL PARA LOS SELECTS PERSONALIZADOS
     // ====================
 
-
-
-    const customSelect = document.getElementById("customFiltroMes");
-    const selected = customSelect.querySelector(".selected");
-    const options = customSelect.querySelectorAll(".options li");
-
-    // Abrir/cerrar select al click en el botón
-    selected.addEventListener("click", (e) => {
-      e.stopPropagation(); // Evita que se cierre inmediatamente
-      customSelect.classList.toggle("active");
-    });
-
-    // Selección de opción
-    options.forEach(opt => {
-      opt.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const value = opt.dataset.value;
-        selected.textContent = opt.textContent;
-        customSelect.classList.remove("active");
-
-        // Actualiza el select original
-        const filtroMes = document.getElementById("filtroMes");
-        filtroMes.value = value;
-
-        // Llama tu función de filtrado
-        filtrarPorMes(value);
-      });
-    });
-
-    // Cerrar select si se hace click fuera
-    document.addEventListener("click", (e) => {
-      if (!customSelect.contains(e.target)) {
-        customSelect.classList.remove("active");
-      }
-    });
-
-    // Evitar scroll/rebote en móviles dentro del select
-    const optionsContainer = customSelect.querySelector(".options");
-    optionsContainer.addEventListener("touchmove", (e) => {
-      e.stopPropagation(); // Solo scroll dentro del select
-    }, { passive: false });
-
-
-
-
-    // ====================
-    // FUNCION PARA EL SELECT TERRITORIO
-    // ====================
-
-
-
-    const customSelectT = document.getElementById("customSelectorTerritorios");
-    const selectedT = customSelectT.querySelector(".selected");
-    const optionsT = customSelectT.querySelectorAll(".options li");
-
-    // Abrir/cerrar select al click
-    selectedT.addEventListener("click", (e) => {
-      e.stopPropagation();
-      customSelectT.classList.toggle("active");
-    });
-
-    // Selección de opción
-    optionsT.forEach(opt => {
-      opt.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const value = opt.dataset.value;
-        selectedT.textContent = opt.textContent;
-        customSelectT.classList.remove("active");
-
-        // Actualiza el select original y llama tu función
-        const selectorTerritorios = document.getElementById("selectorTerritorios");
-        selectorTerritorios.value = value;
-        cambiarTerritorio(); // tu función existente
-      });
-    });
-
-    // Cerrar select si se hace click fuera
-    document.addEventListener("click", (e) => {
-      if (!customSelectT.contains(e.target)) {
-        customSelectT.classList.remove("active");
-      }
-    });
-
-    // Evitar rebote en móviles
-    const optionsContainerT = customSelectT.querySelector(".options");
-    optionsContainerT.addEventListener("touchmove", (e) => {
-      e.stopPropagation();
-    }, { passive: false });
-
-
-
-
-
-
-
-    // ==========================
-    // CIERRE GLOBAL DE SELECTS
-    // ==========================
-
-    function cerrarTodosLosSelects() {
-      document.querySelectorAll(".custom-select.active").forEach(select => {
-        select.classList.remove("active");
-      });
-    }
-
-    // Cuando haces clic o tocas fuera → cerrar ambos selects
-    document.addEventListener("click", (e) => {
-      if (!e.target.closest(".custom-select")) cerrarTodosLosSelects();
-    });
-    document.addEventListener("touchstart", (e) => {
-      if (!e.target.closest(".custom-select")) cerrarTodosLosSelects();
-    });
-
-    // Cuando abres uno → cerrar el otro
-    function configurarSelectSinConflictos(customSelect) {
+    function initCustomSelect(customId, originalId, callback) {
+      const customSelect = document.getElementById(customId);
       const selected = customSelect.querySelector(".selected");
+      const options = customSelect.querySelectorAll(".options li");
+      const originalSelect = document.getElementById(originalId);
+
+      // Abrir/cerrar el select al hacer click
       selected.addEventListener("click", (e) => {
         e.stopPropagation();
-        const estabaActivo = customSelect.classList.contains("active");
-        cerrarTodosLosSelects(); // Cierra el otro si está abierto
-        if (!estabaActivo) customSelect.classList.add("active");
+        closeAllCustomSelects(customSelect); // Cierra los demás antes de abrir
+        customSelect.classList.toggle("active");
+      });
+
+      // Selección de opción
+      options.forEach(opt => {
+        opt.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const value = opt.dataset.value;
+          selected.textContent = opt.textContent;
+          originalSelect.value = value;
+          customSelect.classList.remove("active");
+          callback(value); // Llama la función asociada (filtrarPorMes o cambiarTerritorio)
+        });
+      });
+
+      // Evitar rebote de scroll en móviles
+      const optionsContainer = customSelect.querySelector(".options");
+      optionsContainer.addEventListener("touchmove", (e) => {
+        e.stopPropagation();
+      }, { passive: false });
+    }
+
+    // Cerrar todos los selects al hacer click fuera
+    function closeAllCustomSelects(exception = null) {
+      document.querySelectorAll(".custom-select").forEach(sel => {
+        if (sel !== exception) sel.classList.remove("active");
       });
     }
 
-    // Aplica esto a tus dos selects
-    configurarSelectSinConflictos(document.getElementById("customFiltroMes"));
-    configurarSelectSinConflictos(document.getElementById("customSelectorTerritorios"));
+    document.addEventListener("click", () => closeAllCustomSelects());
+    document.addEventListener("touchstart", () => closeAllCustomSelects());
+
+    // ====================
+    // INICIALIZACIÓN
+    // ====================
+
+    initCustomSelect("customFiltroMes", "filtroMes", filtrarPorMes);
+    initCustomSelect("customSelectorTerritorios", "selectorTerritorios", cambiarTerritorio);
+
+
+
 
 
 
