@@ -2047,7 +2047,47 @@
     optionsContainerT.addEventListener("touchmove", (e) => {
       e.stopPropagation();
     }, { passive: false });
-  </script>
+
+
+
+
+
+
+
+    // ==========================
+    // CIERRE GLOBAL DE SELECTS
+    // ==========================
+
+    function cerrarTodosLosSelects() {
+      document.querySelectorAll(".custom-select.active").forEach(select => {
+        select.classList.remove("active");
+      });
+    }
+
+    // Cuando haces clic o tocas fuera → cerrar ambos selects
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".custom-select")) cerrarTodosLosSelects();
+    });
+    document.addEventListener("touchstart", (e) => {
+      if (!e.target.closest(".custom-select")) cerrarTodosLosSelects();
+    });
+
+    // Cuando abres uno → cerrar el otro
+    function configurarSelectSinConflictos(customSelect) {
+      const selected = customSelect.querySelector(".selected");
+      selected.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const estabaActivo = customSelect.classList.contains("active");
+        cerrarTodosLosSelects(); // Cierra el otro si está abierto
+        if (!estabaActivo) customSelect.classList.add("active");
+      });
+    }
+
+    // Aplica esto a tus dos selects
+    configurarSelectSinConflictos(document.getElementById("customFiltroMes"));
+    configurarSelectSinConflictos(document.getElementById("customSelectorTerritorios"));
+
+
 
   </script>
 
