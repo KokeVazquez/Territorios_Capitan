@@ -75,10 +75,13 @@
 
   /* === Estilos para los botones dentro de menu-derecha === */
   .menu-derecha button {
-    padding: 1vh 2vw;
-    font-size: 1.8vh;
+    padding: clamp(0.5vh, 1.2vw, 1.5vh) clamp(1vw, 2vw, 3vw);
+    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
     border-radius: 5px;
     cursor: pointer;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 250px;
   }
 
   /* =================================================
@@ -271,7 +274,7 @@
 
 
   /* ===========================
-   === SELECT DE MES ========
+   === SELECT DE MES =========
    =========================== */
   .custom-select {
     position: relative;
@@ -279,12 +282,16 @@
     font-weight: bold;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     cursor: pointer;
+    width: 100%;
+    max-width: 250px;
+    /* límite de ancho en pantallas grandes */
+    box-sizing: border-box;
   }
 
   /* Botón visible */
   .custom-select .selected {
-    padding: 1vh 1vw;
-    font-size: 0.8vw;
+    padding: clamp(0.5vh, 1vw, 1.2vh) clamp(1vw, 2vw, 2vw);
+    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
     font-weight: bold;
     border: 2px solid #000;
     border-radius: 20px;
@@ -299,7 +306,8 @@
     background-repeat: no-repeat;
     background-position: right 1vw center;
     background-size: 16px;
-    padding-right: 2vw;
+    padding-right: clamp(2vw, 3vw, 2.5vw);
+    box-sizing: border-box;
   }
 
   .custom-select .selected:hover {
@@ -332,6 +340,7 @@
     z-index: 10000;
     margin-top: 0.5vh;
     padding: 0;
+    box-sizing: border-box;
   }
 
   /* Mostrar lista al activar */
@@ -341,12 +350,13 @@
 
   /* Cada opción */
   .custom-select .options li {
-    padding: 1vh 1vw;
-    font-size: 0.8vw;
+    padding: clamp(0.5vh, 1vw, 1.2vh) clamp(1vw, 2vw, 2vw);
+    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
     font-weight: bold;
     cursor: pointer;
     text-align: center;
     transition: all 0.2s ease-in-out;
+    box-sizing: border-box;
   }
 
   .custom-select .options li:hover {
@@ -363,19 +373,17 @@
     border-color: #111;
   }
 
-  /* Responsive móvil */
-  @media (max-width: 480px) {
-    .custom-select {
-      width: 90vw;
-    }
+  /* Responsive móvil muy pequeño */
+  @media (max-width: 360px) {
 
+    .custom-select,
     .custom-select .selected,
     .custom-select .options li {
-      font-size: 4vw;
-      padding: 3vh 2vw;
-      padding-right: 4vw;
+      font-size: 0.95rem;
+      padding: 1vh 1vw;
     }
   }
+
 
 
 
