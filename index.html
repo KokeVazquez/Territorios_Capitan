@@ -68,12 +68,10 @@
     display: flex;
     flex-direction: column;
     gap: 2vh;
-    /* separación entre botones para escritorio */
     margin: 0;
     padding: 0;
   }
 
-  /* === Estilos para los botones dentro de menu-derecha === */
   .menu-derecha button {
     padding: 1vh 2vw;
     font-size: 1.8vh;
@@ -82,47 +80,43 @@
   }
 
   /* =================================================
-   === Selector de meses debajo del botón Notas ===
-   === (estética igual a selectorTerritorios) ======
+   === Selector de meses (personalizado) ============
    ================================================= */
   #filtroMes {
-    padding: 1.0vh 1vw;
+    padding: 1vh 2vw;
     font-size: 0.8vw;
     font-weight: bold;
     border: 2px solid #000;
-    outline: none;
     border-radius: 20px;
-    background-color: #fff;
+    background: linear-gradient(145deg, #ffffff, #e6e6e6);
     color: #000;
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
+    outline: none;
     transition: all 0.25s ease-in-out;
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     -webkit-tap-highlight-color: transparent;
     margin-top: 0.5vh;
-    /* pequeño espacio sobre el select */
-    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+
+    /* Flecha personalizada */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat: no-repeat;
     background-position: right 1vw center;
-    background-size: 16px;
-    padding-right: 2vw;
+    background-size: 14px;
+    padding-right: 3vw;
   }
 
   #filtroMes:hover {
-    background-color: #ffffff;
-    color: #1f1e1e;
+    background: linear-gradient(145deg, #fafafa, #dcdcdc);
     border-color: #444;
     transform: scale(1.03);
   }
 
   #filtroMes:active {
     transform: scale(0.97);
-    background-color: #222;
+    background: #222;
     color: #fff;
     border-color: #111;
   }
@@ -137,15 +131,6 @@
       min-width: 100px !important;
     }
 
-    .menu-derecha button {
-      font-size: 3vw !important;
-      /* aumentar tamaño del texto en móvil */
-      padding: 2vh 2vw !important;
-      /* más espacio dentro de los botones */
-      min-width: 100px !important;
-      /* ancho mínimo para que no se achiquen */
-    }
-
     #selectorTerritorios,
     #filtroMes {
       font-size: 3vw !important;
@@ -154,7 +139,6 @@
       background-position: right 3vw center;
     }
   }
-
 
   /* ===========================
    === Loader ===============
@@ -204,32 +188,26 @@
   #btnTerritoriosTerminados,
   #backupBtn,
   #restoreBtn {
-    padding: 1.0vh 1vw;
+    padding: 1vh 1vw;
     font-size: 0.8vw;
     font-weight: bold;
     border: 2px solid #000;
-    outline: none;
     border-radius: 20px;
     background-color: #fff;
     color: #000;
     cursor: pointer;
     appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
     transition: all 0.25s ease-in-out;
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
 
   #selectorTerritorios {
-    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat: no-repeat;
     background-position: right 1vw center;
-    background-size: 16px;
-    padding-right: 2vw;
+    background-size: 14px;
+    padding-right: 3vw;
   }
 
   #selectorTerritorios:hover,
@@ -238,8 +216,8 @@
   #btnTerritoriosTerminados:hover,
   #backupBtn:hover,
   #restoreBtn:hover {
-    background-color: #ffffff;
-    color: #1f1e1e;
+    background-color: #fafafa;
+    color: #111;
     border-color: #444;
     transform: scale(1.03);
   }
@@ -284,9 +262,6 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     font-size: 14px;
     user-select: none;
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
   }
 
   .menu-contextual button {
@@ -307,7 +282,6 @@
     color: black;
     text-align: center;
     pointer-events: none;
-    box-shadow: 0 0px 0px black;
   }
 
   /* ✅ Evitar zoom automático en Safari (iPhone) */
@@ -317,7 +291,59 @@
   button {
     font-size: 16px !important;
   }
+
+
+
+  .custom-select {
+    position: relative;
+    width: 150px;
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .custom-select .selected {
+    padding: 10px 12px;
+    border: 2px solid #000;
+    border-radius: 20px;
+    background: #fff;
+    color: #000;
+    transition: all 0.25s ease-in-out;
+  }
+
+  .custom-select.active .selected {
+    background: #f0f0f0;
+  }
+
+  .custom-select .options {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 2px solid #000;
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10000;
+  }
+
+  .custom-select.active .options {
+    display: block;
+  }
+
+  .custom-select .options li {
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .custom-select .options li:hover {
+    background: #e0e0e0;
+  }
 </style>
+
 
 
 
@@ -446,7 +472,30 @@
     <button id="restoreBtn" style="position: fixed; left: 10px; bottom: 70px; padding: 10px; z-index: 9999; ">
       Restaurar Copia
     </button>
-    <select id="filtroMes" onchange="filtrarPorMes()">
+
+    <!-- Select personalizado -->
+    <div class="custom-select" id="customFiltroMes">
+      <div class="selected">Mes</div>
+      <ul class="options">
+        <li data-value="inicio">Mes</li>
+        <li data-value="todos">Todos los meses</li>
+        <li data-value="01">Enero</li>
+        <li data-value="02">Febrero</li>
+        <li data-value="03">Marzo</li>
+        <li data-value="04">Abril</li>
+        <li data-value="05">Mayo</li>
+        <li data-value="06">Junio</li>
+        <li data-value="07">Julio</li>
+        <li data-value="08">Agosto</li>
+        <li data-value="09">Septiembre</li>
+        <li data-value="10">Octubre</li>
+        <li data-value="11">Noviembre</li>
+        <li data-value="12">Diciembre</li>
+      </ul>
+    </div>
+
+    <!-- Select original oculto -->
+    <select id="filtroMes" style="display:none;">
       <option value="inicio">Mes</option>
       <option value="todos">Todos los meses</option>
       <option value="01">Enero</option>
@@ -462,6 +511,9 @@
       <option value="11">Noviembre</option>
       <option value="12">Diciembre</option>
     </select>
+
+
+
   </div>
   <!-- CUADRO DE PORCENTAJE -->
   <div id="cuadroPorcentaje" style="
@@ -1736,6 +1788,32 @@
       });
 
     });
+
+
+
+
+    const customSelect = document.getElementById("customFiltroMes");
+    const selected = customSelect.querySelector(".selected");
+    const options = customSelect.querySelectorAll(".options li");
+
+    selected.addEventListener("click", () => customSelect.classList.toggle("active"));
+
+    options.forEach(opt => {
+      opt.addEventListener("click", () => {
+        const value = opt.dataset.value;
+        selected.textContent = opt.textContent;
+        customSelect.classList.remove("active");
+        // Actualiza el select original
+        const filtroMes = document.getElementById("filtroMes");
+        filtroMes.value = value;
+        filtrarPorMes(value); // Llama tu función
+      });
+    });
+
+    document.addEventListener("click", e => {
+      if (!customSelect.contains(e.target)) customSelect.classList.remove("active");
+    });
+
   </script>
 
 
