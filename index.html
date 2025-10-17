@@ -216,6 +216,8 @@
     margin-top: 0.5vh;
     padding: 0;
     box-sizing: border-box;
+    overscroll-behavior: contain;
+
   }
 
 
@@ -1856,26 +1858,43 @@
     const selected = customSelect.querySelector(".selected");
     const options = customSelect.querySelectorAll(".options li");
 
-    selected.addEventListener("click", () => customSelect.classList.toggle("active"));
+    // Abrir/cerrar select
+    selected.addEventListener("click", (e) => {
+      e.stopPropagation(); // Evita que el click se propague y cierre el select inmediatamente
+      customSelect.classList.toggle("active");
+    });
 
+    // Selección de opción
     options.forEach(opt => {
-      opt.addEventListener("click", () => {
+      opt.addEventListener("click", (e) => {
+        e.stopPropagation();
         const value = opt.dataset.value;
         selected.textContent = opt.textContent;
         customSelect.classList.remove("active");
+
         // Actualiza el select original
         const filtroMes = document.getElementById("filtroMes");
         filtroMes.value = value;
-        filtrarPorMes(value); // Llama tu función
+
+        // Llama tu función de filtrado
+        filtrarPorMes(value);
       });
     });
 
-    document.addEventListener("click", e => {
+    // Cerrar select al hacer click fuera
+    document.addEventListener("click", (e) => {
       if (!customSelect.contains(e.target)) customSelect.classList.remove("active");
     });
 
+    // Evitar scroll/rebote en móviles cuando el select está abierto
+    const optionsContainer = customSelect.querySelector(".options");
+    optionsContainer.addEventListener("touchmove", (e) => {
+      e.stopPropagation(); // Evita que el scroll afecte al body
+    }, { passive: false });
+
 
   </script>
+
 
 
 
