@@ -58,7 +58,7 @@
   }
 
   /* =====================================
-   === Menú derecho y botones ==========
+   === Menú derecho (Área Grande + Notas)
    ===================================== */
   .menu-derecha {
     position: fixed;
@@ -67,124 +67,93 @@
     z-index: 1000;
     display: flex;
     flex-direction: column;
-    gap: 1vh;
+    gap: 2vh;
+    /* separación entre botones para escritorio */
     margin: 0;
     padding: 0;
-    align-items: flex-end;
   }
 
-  /* Botones y select unificados */
-  .menu-derecha button,
-  #selectorTerritorios,
-  .custom-select .selected {
-    padding: 1vh 3vw;
-    font-size: 2vh;
+  /* === Estilos para los botones dentro de menu-derecha === */
+  .menu-derecha button {
+    padding: 1vh 2vw;
+    font-size: 1.8vh;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+
+  /* =================================================
+   === Selector de meses debajo del botón Notas ===
+   === (estética igual a selectorTerritorios) ======
+   ================================================= */
+  #filtroMes {
+    padding: 1.0vh 1vw;
+    font-size: 0.8vw;
     font-weight: bold;
     border: 2px solid #000;
+    outline: none;
     border-radius: 20px;
     background-color: #fff;
     color: #000;
     cursor: pointer;
-    transition: all 0.25s ease-in-out;
-    user-select: none;
-    width: 160px;
-    /* ancho fijo */
-    height: 40px;
-    /* altura fija */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-  }
-
-  /* Hover y activo */
-  .menu-derecha button:hover,
-  #selectorTerritorios:hover,
-  .custom-select .selected:hover {
-    background: linear-gradient(145deg, #fafafa, #dcdcdc);
-    border-color: #444;
-    transform: scale(1.03);
-  }
-
-  .menu-derecha button:active,
-  #selectorTerritorios:active,
-  .custom-select .selected:active {
-    transform: scale(0.97);
-    background-color: #222;
-    color: #fff;
-    border-color: #111;
-  }
-
-  /* =========================
-   Responsivo móvil
-============================ */
-  @media (max-width: 480px) {
-
-    .menu-derecha button,
-    #selectorTerritorios,
-    .custom-select .selected {
-      font-size: 3vw !important;
-      padding: 3vh 2vw !important;
-      width: 120px !important;
-      /* ancho fijo en móvil */
-      height: 36px !important;
-      /* altura fija en móvil */
-    }
-
-    /* Opciones del select personalizado */
-    .custom-select {
-      width: 120px !important;
-    }
-
-    .custom-select .options li {
-      font-size: 3vw !important;
-      padding: 1.5vh 1vw !important;
-    }
-  }
-
-
-  /* =================================================
-   === Selector de meses (personalizado) ============
-   ================================================= */
-  #filtroMes {
-    padding: 1vh 2vw;
-    font-size: 0.8vw;
-    font-weight: bold;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    border: 2px solid #000;
-    border-radius: 20px;
-    background: linear-gradient(145deg, #ffffff, #e6e6e6);
-    color: #000;
-    cursor: pointer;
     appearance: none;
-    /* quita estilo nativo */
     -webkit-appearance: none;
     -moz-appearance: none;
-    outline: none;
     transition: all 0.25s ease-in-out;
     user-select: none;
-    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    margin-top: 0.5vh;
+    /* pequeño espacio sobre el select */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat: no-repeat;
     background-position: right 1vw center;
-    background-size: 14px;
-    padding-right: 3vw;
+    background-size: 16px;
+    padding-right: 2vw;
   }
 
-
   #filtroMes:hover {
-    background: linear-gradient(145deg, #fafafa, #dcdcdc);
+    background-color: #ffffff;
+    color: #1f1e1e;
     border-color: #444;
     transform: scale(1.03);
   }
 
   #filtroMes:active {
     transform: scale(0.97);
-    background: #222;
+    background-color: #222;
     color: #fff;
     border-color: #111;
   }
 
+  /* ===========================
+   === Responsivo móvil ======
+   =========================== */
+  @media (max-width: 480px) {
+    .menu-derecha button {
+      font-size: 3vw !important;
+      padding: 2vh 3vw !important;
+      min-width: 100px !important;
+    }
 
+    .menu-derecha button {
+      font-size: 3vw !important;
+      /* aumentar tamaño del texto en móvil */
+      padding: 2vh 2vw !important;
+      /* más espacio dentro de los botones */
+      min-width: 100px !important;
+      /* ancho mínimo para que no se achiquen */
+    }
+
+    #selectorTerritorios,
+    #filtroMes {
+      font-size: 3vw !important;
+      padding: 2vh 1vw !important;
+      padding-right: 4vw !important;
+      background-position: right 3vw center;
+    }
+  }
 
 
   /* ===========================
@@ -232,39 +201,41 @@
   #selectorTerritorios,
   #btnAreaGrande,
   #btnMostrarTodasNotas,
-  #btnTerritoriosTerminados,
-  #backupBtn,
-  #restoreBtn {
-    padding: 1vh 1vw;
+  #btnTerritoriosTerminados {
+    padding: 1.0vh 1vw;
     font-size: 0.8vw;
     font-weight: bold;
     border: 2px solid #000;
+    outline: none;
     border-radius: 20px;
     background-color: #fff;
     color: #000;
     cursor: pointer;
     appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
     transition: all 0.25s ease-in-out;
     user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
     -webkit-tap-highlight-color: transparent;
   }
 
   #selectorTerritorios {
-    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat: no-repeat;
     background-position: right 1vw center;
-    background-size: 14px;
-    padding-right: 3vw;
+    background-size: 16px;
+    padding-right: 2vw;
   }
 
   #selectorTerritorios:hover,
   #btnAreaGrande:hover,
   #btnMostrarTodasNotas:hover,
-  #btnTerritoriosTerminados:hover,
-  #backupBtn:hover,
-  #restoreBtn:hover {
-    background-color: #fafafa;
-    color: #111;
+  #btnTerritoriosTerminados:hover {
+    background-color: #ffffff;
+    color: #1f1e1e;
     border-color: #444;
     transform: scale(1.03);
   }
@@ -272,14 +243,128 @@
   #selectorTerritorios:active,
   #btnAreaGrande:active,
   #btnMostrarTodasNotas:active,
-  #btnTerritoriosTerminados:active,
-  #backupBtn:active,
-  #restoreBtn:active {
+  #btnTerritoriosTerminados:active {
     transform: scale(0.97);
     background-color: #222;
     color: #fff;
     border-color: #111;
   }
+
+
+  /* ===========================
+   === SELECT DE MES  ========
+   =========================== */
+  .custom-select {
+    position: relative;
+    width: 160px;
+    /* mismo ancho que tus botones */
+    user-select: none;
+    font-weight: bold;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: pointer;
+  }
+
+  /* Botón visible */
+  .custom-select .selected {
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
+    border: 2px solid #000;
+    border-radius: 20px;
+    background-color: #fff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease-in-out;
+    user-select: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1vw center;
+    background-size: 16px;
+    padding-right: 2vw;
+  }
+
+  .custom-select .selected:hover {
+    background-color: #ffffff;
+    color: #1f1e1e;
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  .custom-select .selected:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* Lista desplegable */
+  .custom-select .options {
+    list-style: none;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 2px solid #000;
+    border-radius: 20px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 10000;
+    margin-top: 0.5vh;
+    padding: 0;
+  }
+
+  /* Mostrar lista al activar */
+  .custom-select.active .options {
+    display: block;
+  }
+
+  /* Cada opción */
+  .custom-select .options li {
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .custom-select .options li:hover {
+    background-color: #fafafa;
+    color: #111;
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  .custom-select .options li:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* Responsive móvil */
+  @media (max-width: 480px) {
+    .custom-select {
+      width: 90vw;
+    }
+
+    .custom-select .selected,
+    .custom-select .options li {
+      font-size: 4vw;
+      padding: 3vh 2vw;
+      padding-right: 4vw;
+    }
+  }
+
+
+
+
+
+
 
   /* ===========================
    === Otros estilos ========
@@ -309,6 +394,9 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     font-size: 14px;
     user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
   }
 
   .menu-contextual button {
@@ -329,6 +417,7 @@
     color: black;
     text-align: center;
     pointer-events: none;
+    box-shadow: 0 0px 0px black;
   }
 
   /* ✅ Evitar zoom automático en Safari (iPhone) */
@@ -338,119 +427,8 @@
   button {
     font-size: 16px !important;
   }
-
-
-
-  /* =========================
-   Select personalizado estilo botones
-============================ */
-  .custom-select {
-    position: relative;
-    width: auto;
-    /* ocupa todo el contenedor padre */
-    max-width: 200px;
-    /* igual que tus botones grandes en PC */
-    min-width: 150px;
-    /* para móviles muy pequeños */
-    user-select: none;
-    font-weight: bold;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    cursor: pointer;
-  }
-
-  .custom-select .selected {
-    padding: 1vh 1vw;
-    font-size: 0.8vw;
-    font-weight: bold;
-    border: 2px solid #000;
-    border-radius: 20px;
-    background: white;
-    /* mismo estilo que botones */
-    color: #000;
-    transition: all 0.25s ease-in-out;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-
-    /* Flecha personalizada */
-    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 1vw center;
-    background-size: 14px;
-    padding-right: 3vw;
-  }
-
-  .custom-select .selected:hover {
-    background: linear-gradient(145deg, #fafafa, #dcdcdc);
-    border-color: #444;
-    transform: scale(1.03);
-  }
-
-  .custom-select .selected:active {
-    transform: scale(0.97);
-    background-color: #222;
-    color: #fff;
-    border-color: #111;
-  }
-
-  /* Opciones desplegables */
-  .custom-select .options {
-    list-style: none;
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: #fff;
-    border: 2px solid #000;
-    border-radius: 20px;
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 10000;
-  }
-
-  .custom-select.active .options {
-    display: block;
-  }
-
-  .custom-select .options li {
-    padding: 1vh 1vw;
-    font-size: 0.8vw;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-  }
-
-  .custom-select .options li:hover {
-    background-color: #fafafa;
-    color: #111;
-    border-color: #444;
-    transform: scale(1.03);
-  }
-
-  .custom-select .options li:active {
-    transform: scale(0.97);
-    background-color: #222;
-    color: #fff;
-    border-color: #111;
-  }
-
-  /* =========================
-   Responsivo móvil
-============================ */
-  @media (max-width: 480px) {
-    .custom-select {
-      width: 90vw;
-      /* ocupa casi todo el ancho de la pantalla en móviles */
-    }
-
-    .custom-select .selected,
-    .custom-select .options li {
-      font-size: 4vw !important;
-      padding: 3vh 2vw !important;
-      padding-right: 4vw !important;
-    }
-  }
 </style>
+
 
 
 
