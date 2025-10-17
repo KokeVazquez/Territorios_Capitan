@@ -24,8 +24,8 @@
 
 <style>
   /* ===========================
-     === Base / Reset =========
-  ============================ */
+   === Base / Reset =========
+   =========================== */
   html,
   body {
     margin: 0;
@@ -35,8 +35,8 @@
   }
 
   /* ===========================
-     === Mapa =================
-  ============================ */
+   === Mapa =================
+   =========================== */
   #map {
     height: 100vh;
     width: 100vw;
@@ -45,8 +45,8 @@
   }
 
   /* =====================================
-     === Menú izquierdo (selector) =======
-  ====================================== */
+   === Menú izquierdo (selector) =======
+   ===================================== */
   .menu {
     position: fixed;
     top: 1vh;
@@ -58,8 +58,8 @@
   }
 
   /* =====================================
-     === Menú derecho unificado ===========
-  ====================================== */
+   === Menú derecho y botones ==========
+   ===================================== */
   .menu-derecha {
     position: fixed;
     top: 1%;
@@ -71,22 +71,13 @@
     margin: 0;
     padding: 0;
     align-items: flex-end;
-    /* todo al borde derecho */
   }
 
-  /* =========================
-     Estilo general botones y selects
-  ============================ */
+  /* Botones y select unificados */
   .menu-derecha button,
   #selectorTerritorios,
-  #filtroMes,
-  .custom-select .selected,
-  #btnAreaGrande,
-  #btnMostrarTodasNotas,
-  #btnTerritoriosTerminados,
-  #backupBtn,
-  #restoreBtn {
-    padding: 1.5vh 3vw;
+  .custom-select .selected {
+    padding: 1vh 3vw;
     font-size: 2vh;
     font-weight: bold;
     border: 2px solid #000;
@@ -96,36 +87,19 @@
     cursor: pointer;
     transition: all 0.25s ease-in-out;
     user-select: none;
+    width: 160px;
+    /* ancho fijo */
+    height: 40px;
+    /* altura fija */
     display: flex;
     align-items: center;
     justify-content: center;
     box-sizing: border-box;
   }
 
-  /* Tamaño específico */
-  #selectorTerritorios,
-  #filtroMes {
-    width: 200px;
-    /* más largo que botones normales */
-    height: 45px;
-    padding-right: 3vw;
-    /* espacio para flecha */
-  }
-
-  .menu-derecha button,
-  #btnAreaGrande,
-  #btnMostrarTodasNotas,
-  #btnTerritoriosTerminados,
-  #backupBtn,
-  #restoreBtn {
-    width: 160px;
-    height: 45px;
-  }
-
   /* Hover y activo */
   .menu-derecha button:hover,
   #selectorTerritorios:hover,
-  #filtroMes:hover,
   .custom-select .selected:hover {
     background: linear-gradient(145deg, #fafafa, #dcdcdc);
     border-color: #444;
@@ -134,7 +108,6 @@
 
   .menu-derecha button:active,
   #selectorTerritorios:active,
-  #filtroMes:active,
   .custom-select .selected:active {
     transform: scale(0.97);
     background-color: #222;
@@ -142,115 +115,81 @@
     border-color: #111;
   }
 
-  /* Flecha personalizada para selects */
-  #selectorTerritorios,
-  #filtroMes,
-  .custom-select .selected {
-    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 1vw center;
-    background-size: 14px;
-    appearance: none;
-    outline: none;
-  }
-
   /* =========================
-     Selector personalizado estilo botones
-  ============================ */
-  .custom-select {
-    position: relative;
-    width: auto;
-    max-width: 200px;
-    min-width: 150px;
-    user-select: none;
-    font-weight: bold;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    cursor: pointer;
-  }
-
-  .custom-select .selected {
-    background: white;
-    color: #000;
-    border: 2px solid #000;
-    border-radius: 20px;
-    font-weight: bold;
-    padding: 1.5vh 3vw;
-    font-size: 2vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    transition: all 0.25s ease-in-out;
-    user-select: none;
-  }
-
-  /* Opciones desplegables */
-  .custom-select .options {
-    list-style: none;
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: #fff;
-    border: 2px solid #000;
-    border-radius: 20px;
-    max-height: 250px;
-    overflow-y: auto;
-    z-index: 10000;
-  }
-
-  .custom-select.active .options {
-    display: block;
-  }
-
-  .custom-select .options li {
-    padding: 1vh 1vw;
-    font-size: 0.8vw;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.2s ease-in-out;
-  }
-
-  .custom-select .options li:hover {
-    background-color: #fafafa;
-    color: #111;
-    border-color: #444;
-    transform: scale(1.03);
-  }
-
-  .custom-select .options li:active {
-    transform: scale(0.97);
-    background-color: #222;
-    color: #fff;
-    border-color: #111;
-  }
-
-  /* =========================
-     Responsivo móvil
-  ============================ */
+   Responsivo móvil
+============================ */
   @media (max-width: 480px) {
 
     .menu-derecha button,
     #selectorTerritorios,
-    #filtroMes,
     .custom-select .selected {
-      font-size: 4vw !important;
+      font-size: 3vw !important;
       padding: 3vh 2vw !important;
-      width: 90vw !important;
-      /* ocupa casi todo el ancho */
-      height: 50px !important;
+      width: 120px !important;
+      /* ancho fijo en móvil */
+      height: 36px !important;
+      /* altura fija en móvil */
+    }
+
+    /* Opciones del select personalizado */
+    .custom-select {
+      width: 120px !important;
     }
 
     .custom-select .options li {
-      font-size: 4vw !important;
-      padding: 2vh 1vw !important;
+      font-size: 3vw !important;
+      padding: 1.5vh 1vw !important;
     }
   }
 
-  /* =========================
-     Otros estilos (loader, etiquetas, menú contextual)
-  ============================ */
+
+  /* =================================================
+   === Selector de meses (personalizado) ============
+   ================================================= */
+  #filtroMes {
+    padding: 1vh 2vw;
+    font-size: 0.8vw;
+    font-weight: bold;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    border: 2px solid #000;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffffff, #e6e6e6);
+    color: #000;
+    cursor: pointer;
+    appearance: none;
+    /* quita estilo nativo */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    outline: none;
+    transition: all 0.25s ease-in-out;
+    user-select: none;
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1vw center;
+    background-size: 14px;
+    padding-right: 3vw;
+  }
+
+
+  #filtroMes:hover {
+    background: linear-gradient(145deg, #fafafa, #dcdcdc);
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  #filtroMes:active {
+    transform: scale(0.97);
+    background: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+
+
+
+  /* ===========================
+   === Loader ===============
+   =========================== */
   #loader {
     position: absolute;
     top: 0;
@@ -287,6 +226,64 @@
     }
   }
 
+  /* =================================
+   === Botones generales / select ==
+   ================================= */
+  #selectorTerritorios,
+  #btnAreaGrande,
+  #btnMostrarTodasNotas,
+  #btnTerritoriosTerminados,
+  #backupBtn,
+  #restoreBtn {
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
+    border: 2px solid #000;
+    border-radius: 20px;
+    background-color: #fff;
+    color: #000;
+    cursor: pointer;
+    appearance: none;
+    transition: all 0.25s ease-in-out;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #selectorTerritorios {
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1vw center;
+    background-size: 14px;
+    padding-right: 3vw;
+  }
+
+  #selectorTerritorios:hover,
+  #btnAreaGrande:hover,
+  #btnMostrarTodasNotas:hover,
+  #btnTerritoriosTerminados:hover,
+  #backupBtn:hover,
+  #restoreBtn:hover {
+    background-color: #fafafa;
+    color: #111;
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  #selectorTerritorios:active,
+  #btnAreaGrande:active,
+  #btnMostrarTodasNotas:active,
+  #btnTerritoriosTerminados:active,
+  #backupBtn:active,
+  #restoreBtn:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* ===========================
+   === Otros estilos ========
+   =========================== */
   .leaflet-draw.leaflet-control {
     margin-top: 5vh !important;
   }
@@ -341,8 +338,119 @@
   button {
     font-size: 16px !important;
   }
-</style>
 
+
+
+  /* =========================
+   Select personalizado estilo botones
+============================ */
+  .custom-select {
+    position: relative;
+    width: auto;
+    /* ocupa todo el contenedor padre */
+    max-width: 200px;
+    /* igual que tus botones grandes en PC */
+    min-width: 150px;
+    /* para móviles muy pequeños */
+    user-select: none;
+    font-weight: bold;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: pointer;
+  }
+
+  .custom-select .selected {
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
+    border: 2px solid #000;
+    border-radius: 20px;
+    background: white;
+    /* mismo estilo que botones */
+    color: #000;
+    transition: all 0.25s ease-in-out;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
+    /* Flecha personalizada */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1vw center;
+    background-size: 14px;
+    padding-right: 3vw;
+  }
+
+  .custom-select .selected:hover {
+    background: linear-gradient(145deg, #fafafa, #dcdcdc);
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  .custom-select .selected:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* Opciones desplegables */
+  .custom-select .options {
+    list-style: none;
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border: 2px solid #000;
+    border-radius: 20px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 10000;
+  }
+
+  .custom-select.active .options {
+    display: block;
+  }
+
+  .custom-select .options li {
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+
+  .custom-select .options li:hover {
+    background-color: #fafafa;
+    color: #111;
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  .custom-select .options li:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* =========================
+   Responsivo móvil
+============================ */
+  @media (max-width: 480px) {
+    .custom-select {
+      width: 90vw;
+      /* ocupa casi todo el ancho de la pantalla en móviles */
+    }
+
+    .custom-select .selected,
+    .custom-select .options li {
+      font-size: 4vw !important;
+      padding: 3vh 2vw !important;
+      padding-right: 4vw !important;
+    }
+  }
+</style>
 
 
 
