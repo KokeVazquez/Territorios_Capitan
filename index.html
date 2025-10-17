@@ -152,7 +152,7 @@
   }
 
   /* ===========================
-     === SELECT DE MES =========
+     === SELECTS =========
      =========================== */
   .custom-select {
     position: relative;
@@ -200,7 +200,6 @@
 
   .custom-select .options {
     list-style: none;
-    display: none;
     position: absolute;
     top: 100%;
     left: 0;
@@ -216,9 +215,22 @@
     margin-top: 0.5vh;
     padding: 0;
     box-sizing: border-box;
-    overscroll-behavior: contain;
 
+    /* Animación suave */
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.25s ease-in-out;
+    pointer-events: none;
+    /* deshabilita clicks mientras está cerrado */
   }
+
+  .custom-select.active .options {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    /* habilita clicks cuando está abierto */
+  }
+
 
 
   .custom-select.active .options {
