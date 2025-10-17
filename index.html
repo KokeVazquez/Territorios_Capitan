@@ -67,6 +67,8 @@
     z-index: 1000;
     display: flex;
     flex-direction: column;
+    gap: 1vh;
+    align-items: flex-start;
     gap: 2vh;
     margin: 0;
     padding: 0;
@@ -75,8 +77,8 @@
   .menu-derecha button {
     padding: 0.6vh 1.2vw;
     font-size: 1.4vh;
-    min-width: 120px;
-    max-width: 200px;
+    width: auto;
+    max-width: 180px;
     border-radius: 20px;
     cursor: pointer;
   }
@@ -130,10 +132,9 @@
     .menu-derecha button,
     .custom-select .selected {
       font-size: 3vw !important;
-      padding: 2vh 2vw !important;
-      min-width: 100px !important;
-      max-width: 100% !important;
-      /* ocupar el ancho disponible */
+      padding: 1.5vh 3vw !important;
+      width: auto !important;
+      max-width: 150px !important;
     }
 
     #selectorTerritorios,
