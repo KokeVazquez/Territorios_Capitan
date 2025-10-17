@@ -1590,13 +1590,16 @@
       flyWithLoader(boundsIniciales);
 
       // ================================
-      // Reiniciar el custom select
+      // Reiniciar custom select de territorios
       // ================================
-      const customSelect = document.getElementById("customFiltroMes");
-      const selected = customSelect.querySelector(".selected");
-      const filtroMes = document.getElementById("filtroMes");
-      filtroMes.value = "inicio";       // select oculto
-      selected.textContent = "Mes";     // custom select visible
+      const customSelectTerr = document.getElementById("customSelectorTerritorios");
+      const selectedTerr = customSelectTerr.querySelector(".selected");
+      const selectorTerritorios = document.getElementById("selectorTerritorios");
+
+      selectorTerritorios.value = "";                   // select oculto
+      selectedTerr.textContent = "-- Selecciona un territorio --"; // custom select visible
+      customSelectTerr.classList.remove("active");     // cerrar lista si estaba abierta
+
     });
 
     // === Click derecho (menú contextual) ===
