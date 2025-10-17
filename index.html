@@ -208,13 +208,16 @@
     background-color: #fff;
     border: 2px solid #000;
     border-radius: 20px;
-    max-height: 250px;
+    max-height: 60vh;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     z-index: 10000;
     margin-top: 0.5vh;
     padding: 0;
     box-sizing: border-box;
   }
+
 
   .custom-select.active .options {
     display: block;
