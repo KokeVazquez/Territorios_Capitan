@@ -1858,9 +1858,9 @@
     const selected = customSelect.querySelector(".selected");
     const options = customSelect.querySelectorAll(".options li");
 
-    // Abrir/cerrar select
+    // Abrir/cerrar select al click en el botón
     selected.addEventListener("click", (e) => {
-      e.stopPropagation(); // Evita que el click se propague y cierre el select inmediatamente
+      e.stopPropagation(); // Evita que se cierre inmediatamente
       customSelect.classList.toggle("active");
     });
 
@@ -1881,19 +1881,23 @@
       });
     });
 
-    // Cerrar select al hacer click fuera
+    // Cerrar select si se hace click fuera
     document.addEventListener("click", (e) => {
-      if (!customSelect.contains(e.target)) customSelect.classList.remove("active");
+      if (!customSelect.contains(e.target)) {
+        customSelect.classList.remove("active");
+      }
     });
 
-    // Evitar scroll/rebote en móviles cuando el select está abierto
+    // Evitar scroll/rebote en móviles dentro del select
     const optionsContainer = customSelect.querySelector(".options");
     optionsContainer.addEventListener("touchmove", (e) => {
-      e.stopPropagation(); // Evita que el scroll afecte al body
+      e.stopPropagation(); // Solo scroll dentro del select
     }, { passive: false });
 
 
+
   </script>
+
 
 
 
