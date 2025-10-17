@@ -58,7 +58,7 @@
   }
 
   /* =====================================
-   === Menú derecho (Área Grande + Notas)
+   === Menú derecho y botones ==========
    ===================================== */
   .menu-derecha {
     position: fixed;
@@ -68,20 +68,81 @@
     display: flex;
     flex-direction: column;
     gap: 1vh;
+    /* separación entre botones */
     align-items: flex-start;
-    gap: 2vh;
-    margin: 0;
-    padding: 0;
   }
 
-  .menu-derecha button {
-    padding: 0.6vh 1.2vw;
+  /* Botones y select unificados */
+  .menu-derecha button,
+  #selectorTerritorios,
+  .custom-select .selected {
+    padding: 1vh 1.5vw;
+    /* mismo padding */
     font-size: 1.4vh;
-    width: auto;
-    max-width: 180px;
+    /* mismo tamaño de letra */
+    font-weight: bold;
+    border: 2px solid #000;
     border-radius: 20px;
+    background-color: #fff;
+    color: #000;
     cursor: pointer;
+    transition: all 0.25s ease-in-out;
+    user-select: none;
+    width: 160px;
+    /* ancho fijo */
+    height: 40px;
+    /* altura fija */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
+
+  /* Hover y activo */
+  .menu-derecha button:hover,
+  #selectorTerritorios:hover,
+  .custom-select .selected:hover {
+    background: linear-gradient(145deg, #fafafa, #dcdcdc);
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  .menu-derecha button:active,
+  #selectorTerritorios:active,
+  .custom-select .selected:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* =========================
+   Responsivo móvil
+============================ */
+  @media (max-width: 480px) {
+
+    .menu-derecha button,
+    #selectorTerritorios,
+    .custom-select .selected {
+      font-size: 3vw !important;
+      padding: 2vh 2vw !important;
+      width: 120px !important;
+      /* ancho fijo en móvil */
+      height: 36px !important;
+      /* altura fija en móvil */
+    }
+
+    /* Opciones del select personalizado */
+    .custom-select {
+      width: 120px !important;
+    }
+
+    .custom-select .options li {
+      font-size: 3vw !important;
+      padding: 1.5vh 1vw !important;
+    }
+  }
+
 
   /* =================================================
    === Selector de meses (personalizado) ============
@@ -124,27 +185,8 @@
     border-color: #111;
   }
 
-  /* ===========================
-   === Responsivo móvil ======
-   =========================== */
-  @media (max-width: 480px) {
 
-    .menu-derecha button,
-    .custom-select .selected {
-      font-size: 3vw !important;
-      padding: 1.5vh 3vw !important;
-      width: auto !important;
-      max-width: 150px !important;
-    }
 
-    #selectorTerritorios,
-    #filtroMes {
-      font-size: 3vw !important;
-      padding: 2vh 1vw !important;
-      padding-right: 4vw !important;
-      background-position: right 3vw center;
-    }
-  }
 
   /* ===========================
    === Loader ===============
