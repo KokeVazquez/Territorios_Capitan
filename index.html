@@ -73,9 +73,11 @@
   }
 
   .menu-derecha button {
-    padding: 1vh 2vw;
-    font-size: 1.8vh;
-    border-radius: 5px;
+    padding: 0.6vh 1.2vw;
+    font-size: 1.4vh;
+    min-width: 120px;
+    max-width: 200px;
+    border-radius: 20px;
     cursor: pointer;
   }
 
@@ -124,10 +126,14 @@
    === Responsivo móvil ======
    =========================== */
   @media (max-width: 480px) {
-    .menu-derecha button {
+
+    .menu-derecha button,
+    .custom-select .selected {
       font-size: 3vw !important;
-      padding: 2vh 3vw !important;
+      padding: 2vh 2vw !important;
       min-width: 100px !important;
+      max-width: 100% !important;
+      /* ocupar el ancho disponible */
     }
 
     #selectorTerritorios,
@@ -298,9 +304,9 @@
 ============================ */
   .custom-select {
     position: relative;
-    width: 100%;
+    width: auto;
     /* ocupa todo el contenedor padre */
-    max-width: 210px;
+    max-width: 200px;
     /* igual que tus botones grandes en PC */
     min-width: 150px;
     /* para móviles muy pequeños */
@@ -1508,13 +1514,26 @@
       // Volar a vista general de todo el mapa
       // ================================
       flyWithLoader(boundsIniciales);
+
+      // ================================
+      // Reiniciar el custom select
+      // ================================
+      const customSelect = document.getElementById("customFiltroMes");
+      const selected = customSelect.querySelector(".selected");
+      const filtroMes = document.getElementById("filtroMes");
+      filtroMes.value = "inicio";       // select oculto
+      selected.textContent = "Mes";     // custom select visible
     });
 
     // === Click derecho (menú contextual) ===
     btnArea.addEventListener("contextmenu", function (e) {
       e.preventDefault(); // Evita que salga el menú del navegador
       const filtroMes = document.getElementById("filtroMes");
-      filtroMes.value = "inicio"; // Selecciona "Mes"
+      const customSelect = document.getElementById("customFiltroMes");
+      const selected = customSelect.querySelector(".selected");
+
+      filtroMes.value = "inicio";   // select oculto
+      selected.textContent = "Mes"; // custom select visible
       filtrarPorMes(); // Ejecuta la función de filtrado
       console.log("Clic derecho → Filtro establecido en 'Mes'");
     });
@@ -1523,7 +1542,11 @@
     btnArea.addEventListener("mousedown", function () {
       presionadoTimeout = setTimeout(() => {
         const filtroMes = document.getElementById("filtroMes");
+        const customSelect = document.getElementById("customFiltroMes");
+        const selected = customSelect.querySelector(".selected");
+
         filtroMes.value = "inicio";
+        selected.textContent = "Mes";
         filtrarPorMes();
         console.log("Pulsación larga → Filtro establecido en 'Mes'");
       }, 800); // 800 ms = ~0.8 s de mantener presionado
@@ -1540,7 +1563,11 @@
     btnArea.addEventListener("touchstart", function () {
       presionadoTimeout = setTimeout(() => {
         const filtroMes = document.getElementById("filtroMes");
+        const customSelect = document.getElementById("customFiltroMes");
+        const selected = customSelect.querySelector(".selected");
+
         filtroMes.value = "inicio";
+        selected.textContent = "Mes";
         filtrarPorMes();
         console.log("Pulsación larga (móvil) → Filtro establecido en 'Mes'");
       }, 800);
@@ -1549,8 +1576,8 @@
     btnArea.addEventListener("touchend", function () {
       clearTimeout(presionadoTimeout);
     });
-
     // ================================================================================================================================//
+
 
 
 
@@ -1849,6 +1876,11 @@
 
     });
 
+
+
+    // ====================
+    // FUNCION PARA EL SELECT
+    // ====================
 
 
 
