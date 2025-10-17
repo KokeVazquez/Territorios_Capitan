@@ -86,27 +86,26 @@
     padding: 1vh 2vw;
     font-size: 0.8vw;
     font-weight: bold;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     border: 2px solid #000;
     border-radius: 20px;
     background: linear-gradient(145deg, #ffffff, #e6e6e6);
     color: #000;
     cursor: pointer;
     appearance: none;
+    /* quita estilo nativo */
     -webkit-appearance: none;
     -moz-appearance: none;
     outline: none;
     transition: all 0.25s ease-in-out;
     user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    margin-top: 0.5vh;
-
-    /* Flecha personalizada */
     background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
     background-repeat: no-repeat;
     background-position: right 1vw center;
     background-size: 14px;
     padding-right: 3vw;
   }
+
 
   #filtroMes:hover {
     background: linear-gradient(145deg, #fafafa, #dcdcdc);
@@ -294,37 +293,69 @@
 
 
 
+  /* =========================
+   Select personalizado estilo botones
+============================ */
   .custom-select {
     position: relative;
-    width: 150px;
-    font-weight: bold;
-    cursor: pointer;
+    width: 100%;
+    /* ocupa todo el contenedor padre */
+    max-width: 210px;
+    /* igual que tus botones grandes en PC */
+    min-width: 150px;
+    /* para móviles muy pequeños */
     user-select: none;
+    font-weight: bold;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: pointer;
   }
 
   .custom-select .selected {
-    padding: 10px 12px;
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
     border: 2px solid #000;
     border-radius: 20px;
-    background: #fff;
+    background: white;
+    /* mismo estilo que botones */
     color: #000;
     transition: all 0.25s ease-in-out;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
+    /* Flecha personalizada */
+    background-image: url("data:image/svg+xml;utf8,<svg fill='black' height='18' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 1vw center;
+    background-size: 14px;
+    padding-right: 3vw;
   }
 
-  .custom-select.active .selected {
-    background: #f0f0f0;
+  .custom-select .selected:hover {
+    background: linear-gradient(145deg, #fafafa, #dcdcdc);
+    border-color: #444;
+    transform: scale(1.03);
   }
 
+  .custom-select .selected:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* Opciones desplegables */
   .custom-select .options {
+    list-style: none;
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
     right: 0;
-    background: #fff;
+    background-color: #fff;
     border: 2px solid #000;
-    border-radius: 12px;
-    max-height: 200px;
+    border-radius: 20px;
+    max-height: 250px;
     overflow-y: auto;
     z-index: 10000;
   }
@@ -334,13 +365,42 @@
   }
 
   .custom-select .options li {
-    padding: 8px 12px;
+    padding: 1vh 1vw;
+    font-size: 0.8vw;
+    font-weight: bold;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s ease-in-out;
   }
 
   .custom-select .options li:hover {
-    background: #e0e0e0;
+    background-color: #fafafa;
+    color: #111;
+    border-color: #444;
+    transform: scale(1.03);
+  }
+
+  .custom-select .options li:active {
+    transform: scale(0.97);
+    background-color: #222;
+    color: #fff;
+    border-color: #111;
+  }
+
+  /* =========================
+   Responsivo móvil
+============================ */
+  @media (max-width: 480px) {
+    .custom-select {
+      width: 90vw;
+      /* ocupa casi todo el ancho de la pantalla en móviles */
+    }
+
+    .custom-select .selected,
+    .custom-select .options li {
+      font-size: 3vw !important;
+      padding: 2vh 2vw !important;
+      padding-right: 4vw !important;
+    }
   }
 </style>
 
@@ -1813,6 +1873,7 @@
     document.addEventListener("click", e => {
       if (!customSelect.contains(e.target)) customSelect.classList.remove("active");
     });
+
 
   </script>
 
