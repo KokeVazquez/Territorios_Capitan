@@ -446,7 +446,6 @@
     <button id="restoreBtn" style="position: fixed; left: 10px; bottom: 70px; padding: 10px; z-index: 9999; ">
       Restaurar Copia
     </button>
-    <!--QUITE EL BOTON DE EXPORTAR EXCEL PARA INTEGRARLO AL POP UP-->
     <select id="filtroMes" onchange="filtrarPorMes()">
       <option value="inicio">Mes</option>
       <option value="todos">Todos los meses</option>
@@ -1355,7 +1354,11 @@
     // ==========================================================================================================================
     // === BLOQUE: Botón Área Grande ===
     // ==========================================================================================================================
-    document.getElementById("btnAreaGrande").addEventListener("click", function () {
+    const btnArea = document.getElementById("btnAreaGrande");
+    let presionadoTimeout;
+
+    // === Click izquierdo normal ===
+    btnArea.addEventListener("click", function () {
       // ================================
       // Cerrar cualquier popup abierto
       // ================================
@@ -1394,7 +1397,49 @@
       // ================================
       flyWithLoader(boundsIniciales);
     });
+
+    // === Click derecho (menú contextual) ===
+    btnArea.addEventListener("contextmenu", function (e) {
+      e.preventDefault(); // Evita que salga el menú del navegador
+      const filtroMes = document.getElementById("filtroMes");
+      filtroMes.value = "inicio"; // Selecciona "Mes"
+      filtrarPorMes(); // Ejecuta la función de filtrado
+      console.log("Clic derecho → Filtro establecido en 'Mes'");
+    });
+
+    // === Mantener presionado (funciona en PC y móvil) ===
+    btnArea.addEventListener("mousedown", function () {
+      presionadoTimeout = setTimeout(() => {
+        const filtroMes = document.getElementById("filtroMes");
+        filtroMes.value = "inicio";
+        filtrarPorMes();
+        console.log("Pulsación larga → Filtro establecido en 'Mes'");
+      }, 800); // 800 ms = ~0.8 s de mantener presionado
+    });
+
+    btnArea.addEventListener("mouseup", function () {
+      clearTimeout(presionadoTimeout);
+    });
+
+    btnArea.addEventListener("mouseleave", function () {
+      clearTimeout(presionadoTimeout);
+    });
+
+    btnArea.addEventListener("touchstart", function () {
+      presionadoTimeout = setTimeout(() => {
+        const filtroMes = document.getElementById("filtroMes");
+        filtroMes.value = "inicio";
+        filtrarPorMes();
+        console.log("Pulsación larga (móvil) → Filtro establecido en 'Mes'");
+      }, 800);
+    });
+
+    btnArea.addEventListener("touchend", function () {
+      clearTimeout(presionadoTimeout);
+    });
+
     // ================================================================================================================================//
+
 
 
 
@@ -1447,34 +1492,28 @@
     const filtroMes = document.getElementById("filtroMes");
 
     if (filtroMes) {
-      // Ejecutar filtrado inmediatamente al cambiar valor (útil en móviles)
+      // Eventos normales
       filtroMes.addEventListener("input", filtrarPorMes);
-      // Ejecutar filtrado al confirmar selección (compatibilidad con PC)
       filtroMes.addEventListener("change", filtrarPorMes);
 
-      // === PC: clic derecho sobre el selector reinicia al inicio ===
-      filtroMes.addEventListener("contextmenu", (e) => {
-        e.preventDefault(); // evitar menú contextual
-        filtroMes.value = "inicio"; // reinicia
+      // === CLICK DERECHO (PC) ===
+      filtroMes.addEventListener("contextmenu", function (e) {
+        e.preventDefault(); // Evita que aparezca el menú del navegador
+        filtroMes.value = "inicio"; // Selecciona la opción "Mes"
         filtrarPorMes();
       });
 
-      // === Móvil: detectar presionar largo para reiniciar ===
-      let touchTimer = null;
-      const longPressDuration = 600; // ms que hay que mantener presionado
-
-      filtroMes.addEventListener("touchstart", (e) => {
-        touchTimer = setTimeout(() => {
-          filtroMes.value = "inicio"; // reinicia
+      // === DEJAR PRESIONADO (MÓVIL) ===
+      let pressTimer;
+      filtroMes.addEventListener("touchstart", function (e) {
+        pressTimer = setTimeout(() => {
+          filtroMes.value = "inicio"; // Selecciona la opción "Mes"
           filtrarPorMes();
-        }, longPressDuration);
+        }, 800); // 800 ms = dejar presionado
       });
 
-      filtroMes.addEventListener("touchend", (e) => {
-        if (touchTimer) {
-          clearTimeout(touchTimer); // si soltó antes, cancelar reinicio
-          touchTimer = null;
-        }
+      filtroMes.addEventListener("touchend", function (e) {
+        clearTimeout(pressTimer); // Cancela si no se mantiene presionado
       });
     }
 
