@@ -1232,7 +1232,6 @@
 
     // ====================================================REGISTRAR CAPITAN Y FILTRAR POR MES=================================================//
 
-
     // ================================
     // === BLOQUE 1: Registrar Capitán ===
     // ================================
@@ -1305,7 +1304,8 @@
         position:absolute; top:8px; right:8px; font-size:18px; border:none; background:none; cursor:pointer;">✖</button>
       <h3 style="margin-bottom:15px;">Registrar Capitán</h3>
       <input id="inputCapitan" placeholder="Nombre del capitán" style="width:90%; padding:6px; margin-bottom:10px;"/>
-      <input id="inputFecha" type="date" style="width:90%; padding:6px; margin-bottom:15px;"/>
+      <input id="inputFecha" type="date" style="width:90%; padding:6px; margin-bottom:10px;"/>
+      <textarea id="inputComentario" placeholder="Comentario (opcional)" style="width:90%; padding:6px; margin-bottom:15px;"></textarea>
       <button id="guardarCapitan" style="
         padding:8px 15px; background:#4caf50; color:white; border:none; border-radius:6px; cursor:pointer;
       ">Guardar</button>
@@ -1327,18 +1327,20 @@
       modal.querySelector("#guardarCapitan").addEventListener("click", () => {
         const capitan = modal.querySelector("#inputCapitan").value.trim();
         const fecha = modal.querySelector("#inputFecha").value.trim();
+        const comentario = modal.querySelector("#inputComentario").value.trim(); // nuevo campo
+
         if (!capitan || !fecha) return alert("Ingresa nombre y fecha");
 
         // Guardar en localStorage
         let registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
         if (!registros[pol._id]) registros[pol._id] = [];
-        registros[pol._id].push(`Capitán: ${capitan} | Fecha: ${fecha}`);
+
+        // Guardamos todo en un string separado por '| Comentario:'
+        registros[pol._id].push(`Capitán: ${capitan} | Fecha: ${fecha} | Comentario: ${comentario}`);
         localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
 
-        // Cerrar popup
+        // Cerrar popup y mostrar confirmación
         if (document.body.contains(modal)) document.body.removeChild(modal);
-
-        // Mostrar confirmación
         mostrarPopupConfirmacionCentro("Capitán registrado con éxito!");
 
         // Pintar polígono de gris indicando que está trabajado
