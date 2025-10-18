@@ -890,7 +890,7 @@
 
 
     // =========================================================================================================================================
-    // === Botón Territorios Terminados ===
+    // === Botón Territorios Terminados con notas integradas ===
     // =========================================================================================================================================
 
     document.getElementById("btnTerritoriosTerminados").addEventListener("click", function () {
@@ -916,7 +916,11 @@
             (registros[pol._id] || []).forEach(reg => {
               const partes = reg.split('| Fecha:');
               const capitan = partes[0].replace("Capitán:", "").replace("Trabajado por:", "").trim();
-              const fecha = partes[1]?.trim();
+              const fechaYNota = partes[1]?.trim() || "";
+              const fecha = fechaYNota.split('| Comentario:')[0]?.trim() || "";
+              const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
+              const tieneNota = nota && nota.length > 0; // <--- definimos si hay nota
+
               if (!fecha) return;
 
               let mesRegistro = '';
@@ -933,17 +937,19 @@
                 let anio = partesFecha[2];
                 let fechaFormateada = `${dia}-${mesesCortos[mesNum - 1] || "???"}-${anio}`;
 
-                // Registro con nombre y fecha en negrita roja por defecto
                 territorioHtml += `
 <p class="registroItem" style="background:#f8f8f8;padding:8px 10px;border-radius:6px;margin:5px 0;position:relative;color:#000;">
   <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span> | Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFormateada}</span>
   <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:5px;">
     <button class="btnEditarInline" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#1976d2;color:white;border:none;border-radius:4px;cursor:pointer;">✏️</button>
     <button class="btnEliminar" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#e53935;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️</button>
+    <button class="btnNota" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#ffb74d;color:white;border:none;border-radius:4px;cursor:pointer;">📝</button>
   </span>
+  ${tieneNota ? `<span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:black;border-radius:50%;display:inline-block;" title="Tiene nota"></span>` : ""}
 </p>`;
               }
             });
+
           });
           if (territorioHtml) { html += territorioHtml; hayRegistros = true; }
         });
@@ -964,7 +970,7 @@
 
       document.getElementById("cerrarModal").addEventListener("click", () => { document.body.removeChild(modal); });
 
-      // === Asignar eventos de edición inline y eliminación ===
+      // === Asignar eventos de edición inline, eliminación y notas ===
       function asignarEventosInline() {
         // Editar inline
         modal.querySelectorAll(".btnEditarInline").forEach(btn => {
@@ -972,124 +978,113 @@
             const item = btn.closest(".registroItem");
             const nombreSpan = item.querySelector(".nombreCapitan");
             const fechaSpan = item.querySelector(".fechaRegistro");
-
             const nombreActual = nombreSpan.textContent;
             const fechaActual = fechaSpan.textContent;
-
-            // Input para nombre
             const inputNombre = document.createElement("input");
             inputNombre.value = nombreActual;
-            inputNombre.style.width = "100px";
-            inputNombre.style.fontWeight = "bold";
-            inputNombre.style.color = "red";
-
-            // Input tipo date para la fecha
-            const inputFecha = document.createElement("input");
-            inputFecha.type = "date";
-            // Convertir DD-MMM-YYYY a YYYY-MM-DD
+            inputNombre.style.width = "100px"; inputNombre.style.fontWeight = "bold"; inputNombre.style.color = "red";
+            const inputFecha = document.createElement("input"); inputFecha.type = "date";
             const partes = fechaActual.split("-");
             const dia = partes[0].padStart(2, "0");
             const mes = ("ene feb mar abr may jun jul ago sep oct nov dic".split(" ").indexOf(partes[1].toLowerCase()) + 1).toString().padStart(2, "0");
             const anio = partes[2];
-            inputFecha.value = `${anio}-${mes}-${dia}`;
-            inputFecha.style.fontWeight = "bold";
-            inputFecha.style.color = "red";
-
-            nombreSpan.replaceWith(inputNombre);
-            fechaSpan.replaceWith(inputFecha);
-
-            btn.textContent = "💾";
-            btn.style.background = "#43a047";
-
+            inputFecha.value = `${anio}-${mes}-${dia}`; inputFecha.style.fontWeight = "bold"; inputFecha.style.color = "red";
+            nombreSpan.replaceWith(inputNombre); fechaSpan.replaceWith(inputFecha);
+            btn.textContent = "💾"; btn.style.background = "#43a047";
             btn.onclick = () => {
               const nuevoNombre = inputNombre.value.trim();
-              const nuevaFechaRaw = inputFecha.value; // YYYY-MM-DD
+              const nuevaFechaRaw = inputFecha.value;
               if (!nuevoNombre || !nuevaFechaRaw) { alert("Nombre y fecha no pueden estar vacíos"); return; }
-
-              // Convertir de nuevo a DD-MMM-YYYY
               const fechaParts = nuevaFechaRaw.split("-");
               const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
               const fechaFormateada = `${fechaParts[2].padStart(2, "0")}-${mesesCortos[parseInt(fechaParts[1], 10) - 1]}-${fechaParts[0]}`;
-
-              // Actualizar localStorage
               const territorioId = btn.dataset.territorio;
               const polId = btn.dataset.pol;
               const index = parseInt(btn.dataset.index, 10);
               const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-              registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaFormateada}`;
+              // mantener nota existente si hay
+              const nota = registros[polId][index].split('| Comentario:')[1]?.trim() || "";
+              registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaFormateada}${nota ? " | Comentario: " + nota : ""}`;
               localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-
-              // Volver a mostrar texto en negrita roja
-              const spanNombre = document.createElement("span");
-              spanNombre.className = "nombreCapitan";
-              spanNombre.textContent = nuevoNombre;
-              spanNombre.style.fontWeight = "bold";
-              spanNombre.style.color = "red";
-
-              const spanFecha = document.createElement("span");
-              spanFecha.className = "fechaRegistro";
-              spanFecha.textContent = fechaFormateada;
-              spanFecha.style.fontWeight = "bold";
-              spanFecha.style.color = "red";
-
-              inputNombre.replaceWith(spanNombre);
-              inputFecha.replaceWith(spanFecha);
-
-              btn.textContent = "✏️";
-              btn.style.background = "#1976d2";
-
-              asignarEventosInline(); // re-asignar para nuevos botones
+              const spanNombre = document.createElement("span"); spanNombre.className = "nombreCapitan"; spanNombre.textContent = nuevoNombre; spanNombre.style.fontWeight = "bold"; spanNombre.style.color = "red";
+              const spanFecha = document.createElement("span"); spanFecha.className = "fechaRegistro"; spanFecha.textContent = fechaFormateada; spanFecha.style.fontWeight = "bold"; spanFecha.style.color = "red";
+              inputNombre.replaceWith(spanNombre); inputFecha.replaceWith(spanFecha);
+              btn.textContent = "✏️"; btn.style.background = "#1976d2";
+              asignarEventosInline();
             };
           });
         });
 
-        // Eliminar registro individual con confirmación
+        // Eliminar registro individual
         modal.querySelectorAll(".btnEliminar").forEach(btn => {
           btn.addEventListener("click", () => {
-            const confirmar = confirm("⚠️ ¿Estás seguro de que quieres eliminar este registro?");
-            if (!confirmar) return;
-
+            if (!confirm("⚠️ ¿Estás seguro de que quieres eliminar este registro?")) return;
             const territorioId = btn.dataset.territorio;
             const polId = btn.dataset.pol;
             const index = parseInt(btn.dataset.index, 10);
-
-            // Encontrar el contenedor completo del registro (incluye título si es último)
             const item = btn.closest(".registroItem");
-
-            // Animación estilo "manta absorbida"
-            item.style.transition = "all 0.5s ease-in";
-            item.style.transformOrigin = "bottom right";
-            item.style.transform = "scaleY(0) scaleX(0.1)";
-            item.style.opacity = "0";
-
+            item.style.transition = "all 0.5s ease-in"; item.style.transformOrigin = "bottom right"; item.style.transform = "scaleY(0) scaleX(0.1)"; item.style.opacity = "0";
             setTimeout(() => {
-              // Borrar del localStorage
               const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-              registros[polId].splice(index, 1);
-              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-
-              // Revisar si quedan registros en este territorio
+              registros[polId].splice(index, 1); localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
               if (!registros[polId] || registros[polId].length === 0) {
-                // Si no hay registros, eliminar también el título del territorio
-                const tituloTerritorio = item.previousElementSibling; // asumimos <h3> antes del registro
-                if (tituloTerritorio && tituloTerritorio.tagName === "H3") {
-                  tituloTerritorio.remove();
-                }
+                const tituloTerritorio = item.previousElementSibling; if (tituloTerritorio && tituloTerritorio.tagName === "H3") tituloTerritorio.remove();
               }
-
-              // Remover el registro del DOM
               item.remove();
             }, 500);
           });
         });
 
-      }
+        // Botón de nota
+        modal.querySelectorAll(".btnNota").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const territorioId = btn.dataset.territorio;
+            const polId = btn.dataset.pol;
+            const index = parseInt(btn.dataset.index, 10);
+            const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+            const reg = registros[polId][index] || "";
+            const partes = reg.split('| Comentario:');
+            const notaActual = partes[1]?.trim() || "";
 
+            const popupNota = document.createElement("div");
+            popupNota.style.cssText = `position: fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.3); z-index:10000; width:300px; text-align:center;`;
+            popupNota.innerHTML = `
+<h3>Nota</h3>
+<textarea id="inputNota" style="width:90%; height:80px; margin-bottom:10px;">${notaActual}</textarea>
+<div style="display:flex; justify-content:center; gap:10px;">
+  <button id="guardarNota" style="padding:6px 12px; background:#4caf50; color:white; border:none; border-radius:6px; cursor:pointer;">Guardar</button>
+  <button id="eliminarNota" style="padding:6px 12px; background:#e53935; color:white; border:none; border-radius:6px; cursor:pointer;">Eliminar</button>
+</div>
+<button id="cerrarNota" style="position:absolute; top:8px; right:8px; border:none; background:none; cursor:pointer; font-size:18px;">✖</button>
+`;
+            document.body.appendChild(popupNota);
+
+            popupNota.querySelector("#guardarNota").addEventListener("click", () => {
+              const nuevaNota = popupNota.querySelector("#inputNota").value.trim();
+              registros[polId][index] = partes[0].trim() + (nuevaNota ? " | Comentario: " + nuevaNota : "");
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+              document.body.removeChild(popupNota);
+              modal.remove(); document.getElementById("btnTerritoriosTerminados").click();
+            });
+
+            popupNota.querySelector("#eliminarNota").addEventListener("click", () => {
+              registros[polId][index] = partes[0].trim();
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+              document.body.removeChild(popupNota);
+              modal.remove(); document.getElementById("btnTerritoriosTerminados").click();
+            });
+
+            popupNota.querySelector("#cerrarNota").addEventListener("click", () => {
+              if (document.body.contains(popupNota)) document.body.removeChild(popupNota);
+            });
+          });
+        });
+
+      }
 
       asignarEventosInline();
 
-
-      // === Para borrar los registros del mes seleccionado 
+      // === Borrar registros del mes ===
       function borrarRegistrosDelMes() {
         const btnBasura = document.getElementById("borrarRegistros");
         btnBasura.style.transform = "translateX(5px)";
@@ -1111,9 +1106,7 @@
           localStorage.setItem(territorio._id + "_capitanes", JSON.stringify(registros));
         });
 
-        window.todosLosTerritorios.forEach(territorio => {
-          territorio.eachLayer(pol => { if (pol._selected) { pol._selected = false; pol.setStyle(pol._originalStyle); } });
-        });
+        window.todosLosTerritorios.forEach(territorio => { territorio.eachLayer(pol => { if (pol._selected) { pol._selected = false; pol.setStyle(pol._originalStyle); } }); });
 
         filtrarPorMes();
 
@@ -1136,9 +1129,7 @@
         const confirmar = confirm(mostrarTodos ?
           "⚠️ Esto borrará TODOS los registros guardados. ¿Seguro que quieres continuar?" :
           "¿Estás seguro de que quieres borrar los registros de este mes?");
-        if (confirmar) {
-          borrarRegistrosDelMes();
-        }
+        if (confirmar) { borrarRegistrosDelMes(); }
       });
 
     });
