@@ -924,7 +924,6 @@
               else if (fecha.includes('/')) mesRegistro = fecha.split('/')[1];
               else if (fecha.length >= 5) mesRegistro = fecha.slice(3, 5);
 
-              // ✅ Mostrar todos o filtrar por mes
               if (mostrarTodos || mesRegistro === mes.padStart(2, '0')) {
                 if (!territorioHtml) territorioHtml += `<h3 style="margin-top:15px;color:#444;">📍 Territorio ${tIndex + 1}</h3>`;
                 const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
@@ -933,7 +932,16 @@
                 let mesNum = parseInt(partesFecha[1], 10);
                 let anio = partesFecha[2];
                 let fechaFormateada = `${dia}-${mesesCortos[mesNum - 1] || "???"}-${anio}`;
-                territorioHtml += `<p class="registroItem" style="background:#f8f8f8;padding:8px 10px;border-radius:6px;margin:5px 0;position:relative;color:#000;"><strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por: <strong style="color:red;">${capitan}</strong> | Fecha: <strong style="color:red;">${fechaFormateada}</strong></p>`;
+
+                // Registro con nombre y fecha en negrita roja por defecto
+                territorioHtml += `
+<p class="registroItem" style="background:#f8f8f8;padding:8px 10px;border-radius:6px;margin:5px 0;position:relative;color:#000;">
+  <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span> | Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFormateada}</span>
+  <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:5px;">
+    <button class="btnEditarInline" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#1976d2;color:white;border:none;border-radius:4px;cursor:pointer;">✏️</button>
+    <button class="btnEliminar" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#e53935;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️</button>
+  </span>
+</p>`;
               }
             });
           });
@@ -956,41 +964,130 @@
 
       document.getElementById("cerrarModal").addEventListener("click", () => { document.body.removeChild(modal); });
 
-      // === Preparar registros filtrados para exportar Excel ===
-      let registrosFiltrados = [];
-      window.todosLosTerritorios.forEach((territorio, tIndex) => {
-        territorio.eachLayer(pol => {
-          if (!pol._selected) return;
-          const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
-          (registros[pol._id] || []).forEach(reg => {
-            const partes = reg.split('| Fecha:');
-            const capitan = partes[0].replace("Capitán:", "").replace("Trabajado por:", "").trim();
-            const fecha = partes[1]?.trim();
-            if (!fecha) return;
+      // === Asignar eventos de edición inline y eliminación ===
+      function asignarEventosInline() {
+        // Editar inline
+        modal.querySelectorAll(".btnEditarInline").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const item = btn.closest(".registroItem");
+            const nombreSpan = item.querySelector(".nombreCapitan");
+            const fechaSpan = item.querySelector(".fechaRegistro");
 
-            let mesRegistro = '';
-            if (fecha.includes('-')) mesRegistro = fecha.split('-')[1];
-            else if (fecha.includes('/')) mesRegistro = fecha.split('/')[1];
-            else if (fecha.length >= 5) mesRegistro = fecha.slice(3, 5);
+            const nombreActual = nombreSpan.textContent;
+            const fechaActual = fechaSpan.textContent;
 
-            if (mostrarTodos || mesRegistro === mes.padStart(2, '0')) {
-              const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
-              registrosFiltrados.push([`Territorio ${tIndex + 1} / Cuadra ${cuadraLimpia}`, capitan, fecha]);
-            }
+            // Input para nombre
+            const inputNombre = document.createElement("input");
+            inputNombre.value = nombreActual;
+            inputNombre.style.width = "100px";
+            inputNombre.style.fontWeight = "bold";
+            inputNombre.style.color = "red";
+
+            // Input tipo date para la fecha
+            const inputFecha = document.createElement("input");
+            inputFecha.type = "date";
+            // Convertir DD-MMM-YYYY a YYYY-MM-DD
+            const partes = fechaActual.split("-");
+            const dia = partes[0].padStart(2, "0");
+            const mes = ("ene feb mar abr may jun jul ago sep oct nov dic".split(" ").indexOf(partes[1].toLowerCase()) + 1).toString().padStart(2, "0");
+            const anio = partes[2];
+            inputFecha.value = `${anio}-${mes}-${dia}`;
+            inputFecha.style.fontWeight = "bold";
+            inputFecha.style.color = "red";
+
+            nombreSpan.replaceWith(inputNombre);
+            fechaSpan.replaceWith(inputFecha);
+
+            btn.textContent = "💾";
+            btn.style.background = "#43a047";
+
+            btn.onclick = () => {
+              const nuevoNombre = inputNombre.value.trim();
+              const nuevaFechaRaw = inputFecha.value; // YYYY-MM-DD
+              if (!nuevoNombre || !nuevaFechaRaw) { alert("Nombre y fecha no pueden estar vacíos"); return; }
+
+              // Convertir de nuevo a DD-MMM-YYYY
+              const fechaParts = nuevaFechaRaw.split("-");
+              const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+              const fechaFormateada = `${fechaParts[2].padStart(2, "0")}-${mesesCortos[parseInt(fechaParts[1], 10) - 1]}-${fechaParts[0]}`;
+
+              // Actualizar localStorage
+              const territorioId = btn.dataset.territorio;
+              const polId = btn.dataset.pol;
+              const index = parseInt(btn.dataset.index, 10);
+              const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+              registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaFormateada}`;
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+
+              // Volver a mostrar texto en negrita roja
+              const spanNombre = document.createElement("span");
+              spanNombre.className = "nombreCapitan";
+              spanNombre.textContent = nuevoNombre;
+              spanNombre.style.fontWeight = "bold";
+              spanNombre.style.color = "red";
+
+              const spanFecha = document.createElement("span");
+              spanFecha.className = "fechaRegistro";
+              spanFecha.textContent = fechaFormateada;
+              spanFecha.style.fontWeight = "bold";
+              spanFecha.style.color = "red";
+
+              inputNombre.replaceWith(spanNombre);
+              inputFecha.replaceWith(spanFecha);
+
+              btn.textContent = "✏️";
+              btn.style.background = "#1976d2";
+
+              asignarEventosInline(); // re-asignar para nuevos botones
+            };
           });
         });
-      });
 
-      // === Asignar evento al botón Exportar a Excel ===
-      document.getElementById("btnExportarExcelPopup").addEventListener("click", () => {
-        if (registrosFiltrados.length === 0) { alert("No hay registros para exportar 😅"); return; }
-        const encabezados = ["Territorio / Cuadra", "Capitán", "Fecha"];
-        const wsData = [encabezados, ...registrosFiltrados];
-        const wb = XLSX.utils.book_new();
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        XLSX.utils.book_append_sheet(wb, ws, "Territorios terminados");
-        XLSX.writeFile(wb, `Territorios_${mesNombre}.xlsx`);
-      });
+        // Eliminar registro individual con confirmación
+        modal.querySelectorAll(".btnEliminar").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const confirmar = confirm("⚠️ ¿Estás seguro de que quieres eliminar este registro?");
+            if (!confirmar) return;
+
+            const territorioId = btn.dataset.territorio;
+            const polId = btn.dataset.pol;
+            const index = parseInt(btn.dataset.index, 10);
+
+            // Encontrar el contenedor completo del registro (incluye título si es último)
+            const item = btn.closest(".registroItem");
+
+            // Animación estilo "manta absorbida"
+            item.style.transition = "all 0.5s ease-in";
+            item.style.transformOrigin = "bottom right";
+            item.style.transform = "scaleY(0) scaleX(0.1)";
+            item.style.opacity = "0";
+
+            setTimeout(() => {
+              // Borrar del localStorage
+              const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+              registros[polId].splice(index, 1);
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+
+              // Revisar si quedan registros en este territorio
+              if (!registros[polId] || registros[polId].length === 0) {
+                // Si no hay registros, eliminar también el título del territorio
+                const tituloTerritorio = item.previousElementSibling; // asumimos <h3> antes del registro
+                if (tituloTerritorio && tituloTerritorio.tagName === "H3") {
+                  tituloTerritorio.remove();
+                }
+              }
+
+              // Remover el registro del DOM
+              item.remove();
+            }, 500);
+          });
+        });
+
+      }
+
+
+      asignarEventosInline();
+
 
       // === Para borrar los registros del mes seleccionado 
       function borrarRegistrosDelMes() {
@@ -1047,6 +1144,8 @@
     });
 
     //========================================================================================================================================//
+
+
 
 
 
