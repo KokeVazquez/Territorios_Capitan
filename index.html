@@ -955,26 +955,27 @@
 
 
     // =========================================================================================================================
-    // === MOSTRAR TODAS LAS NOTAS ===
+    // === MOSTRAR ICONOS CON CLICK IZQUIERDO ===
     // =========================================================================================================================
     let notasMostradas = false;
 
     document.getElementById("btnMostrarTodasNotas").addEventListener("click", function () {
       if (!notasMostradas) {
-        // Recorrer todos los territorios
         window.todosLosTerritorios.forEach(territorio => {
           const notasTerritorio = JSON.parse(localStorage.getItem(territorio._id + "_notas") || "{}");
-          // Recorrer todos los polígonos del territorio
+
           territorio.eachLayer(function (pol) {
-            if (notasTerritorio[pol._id] && notasTerritorio[pol._id].length > 0) {
-              // Obtener centroide del polígono
+            const notasPol = notasTerritorio[pol._id];
+            if (notasPol && notasPol.length > 0) {
+              // Centroide
               const latlngs = pol.getLatLngs()[0];
               const coords = latlngs.map(ll => [ll.lng, ll.lat]);
-              coords.push([coords[0][0], coords[0][1]]); // cerrar el polígono
+              coords.push([coords[0][0], coords[0][1]]);
               const centroide = turf.centroid(turf.polygon([coords]));
               const cLat = centroide.geometry.coordinates[1];
               const cLng = centroide.geometry.coordinates[0];
-              // Crear marcador de nota
+
+              // Marcador
               const marker = L.marker([cLat, cLng], {
                 interactive: false,
                 icon: L.divIcon({
@@ -984,20 +985,113 @@
                   iconAnchor: [10, 10]
                 })
               }).addTo(map);
-              // Guardarlo para poder eliminarlo después
+
               window.indicadoresNotas.push(marker);
             }
           });
         });
         notasMostradas = true;
       } else {
-        // Quitar todos los íconos de notas
         window.indicadoresNotas.forEach(m => map.removeLayer(m));
         window.indicadoresNotas = [];
         notasMostradas = false;
       }
     });
 
+    // =========================================================================================================================
+    // === MOSTRAR TODAS LAS NOTAS EN MODAL (CLICK DERECHO O MANTENER) ===
+    // =========================================================================================================================
+    const modalNotas = document.createElement("div");
+    modalNotas.id = "modalNotas";
+    modalNotas.style.position = "fixed";
+    modalNotas.style.top = "0";
+    modalNotas.style.left = "0";
+    modalNotas.style.width = "100%";
+    modalNotas.style.height = "100%";
+    modalNotas.style.backgroundColor = "rgba(0,0,0,0.5)";
+    modalNotas.style.display = "none";
+    modalNotas.style.justifyContent = "center";
+    modalNotas.style.alignItems = "center";
+    modalNotas.style.zIndex = "9999";
+
+    const modalContent = document.createElement("div");
+    modalContent.style.backgroundColor = "#fff";
+    modalContent.style.padding = "20px";
+    modalContent.style.borderRadius = "10px";
+    modalContent.style.maxHeight = "80%";
+    modalContent.style.overflowY = "auto";
+    modalContent.style.width = "80%";
+    modalContent.style.boxShadow = "0 0 15px rgba(0,0,0,0.3)";
+    modalNotas.appendChild(modalContent);
+    document.body.appendChild(modalNotas);
+
+    modalNotas.addEventListener("click", (e) => {
+      if (e.target === modalNotas) modalNotas.style.display = "none";
+    });
+
+    document.getElementById("btnMostrarTodasNotas").addEventListener("contextmenu", function (e) {
+      e.preventDefault();
+
+      let todasLasNotas = [];
+
+      window.todosLosTerritorios.forEach(territorio => {
+        const notasTerritorio = JSON.parse(localStorage.getItem(territorio._id + "_notas") || "{}");
+
+        territorio.eachLayer(function (pol) {
+          const notasPol = notasTerritorio[pol._id];
+          if (notasPol && notasPol.length > 0) {
+            notasPol.forEach(nota => {
+              if (typeof nota === "string") {
+                todasLasNotas.push({
+                  territorio: territorio.options?.name || territorio._id,
+                  cuadra: pol._id,
+                  contenido: nota
+                });
+              } else if (typeof nota === "object") {
+                todasLasNotas.push({
+                  territorio: territorio.options?.name || territorio._id,
+                  cuadra: pol._id,
+                  fecha: nota.fecha || "-",
+                  contenido: nota.texto || JSON.stringify(nota)
+                });
+              }
+            });
+          }
+        });
+      });
+
+      if (todasLasNotas.length === 0) {
+        alert("No hay notas registradas.");
+        return;
+      }
+
+      // ==================== MODAL CONTENT ====================
+      modalContent.innerHTML = "<h2>Todas las Notas Registradas</h2><hr>";
+      todasLasNotas.forEach(n => {
+        const notaDiv = document.createElement("div");
+        notaDiv.style.marginBottom = "10px";
+
+        const territorioNum = n.territorio.replace(/\D/g, ''); // solo números
+        const cuadraNum = n.cuadra.replace(/\D/g, ''); // solo números
+
+        notaDiv.innerHTML = `<b>Territorio:</b> ${territorioNum} <br>
+                         <b>Cuadra:</b> ${cuadraNum} <br>
+                         <b>Nota:</b> <span style="color:red; font-weight:bold;">${n.contenido}</span> <hr>`;
+        modalContent.appendChild(notaDiv);
+      });
+      modalNotas.style.display = "flex";
+    }); // <- CERRAMOS EL EVENTO CONTEXTMENU AQUÍ
+
+    // ==================== MANTENER PULSADO ====================
+    let pressTimer;
+    const btn = document.getElementById("btnMostrarTodasNotas");
+    btn.addEventListener("mousedown", function (e) {
+      pressTimer = setTimeout(() => {
+        btn.dispatchEvent(new Event('contextmenu'));
+      }, 800);
+    });
+    btn.addEventListener("mouseup", function () { clearTimeout(pressTimer); });
+    btn.addEventListener("mouseleave", function () { clearTimeout(pressTimer); });
 
 
 
