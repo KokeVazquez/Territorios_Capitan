@@ -304,6 +304,8 @@
     }
   }
 
+
+
   /* ===========================
      === Loader ===============
      =========================== */
@@ -433,6 +435,112 @@
     transform: scale(1.05);
     background: #34495e;
   }
+
+
+
+
+  /* ============================================
+   === Estilo responsive para territorios terminados ===
+   ============================================ */
+  .registroItem {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: #f8f8f8;
+    padding: 12px 14px;
+    border-radius: 8px;
+    margin: 10px 0;
+    position: relative;
+    color: #000;
+    font-size: 15px;
+    line-height: 1.4;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.1s ease;
+  }
+
+  .registroItem:hover {
+    transform: scale(1.01);
+  }
+
+  .registroItem strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #333;
+  }
+
+  .registroItem .nombreCapitan,
+  .registroItem .fechaRegistro {
+    font-weight: bold;
+    color: #d32f2f;
+  }
+
+  .registroItem .botonesAccion {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+    width: 100%;
+  }
+
+  .registroItem .botonesAccion button {
+    flex: 1;
+    padding: 6px 10px;
+    font-size: 15px;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .registroItem .btnEditarInline {
+    background: #1976d2;
+  }
+
+  .registroItem .btnEliminar {
+    background: #e53935;
+  }
+
+  .registroItem .btnNota {
+    background: #ffb74d;
+    color: #222;
+  }
+
+  .registroItem .btnEditarInline:hover {
+    background: #1565c0;
+  }
+
+  .registroItem .btnEliminar:hover {
+    background: #c62828;
+  }
+
+  .registroItem .btnNota:hover {
+    background: #ffa726;
+  }
+
+  /* Indicador de nota */
+  .registroItem .indicadorNota {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: black;
+    border-radius: 50%;
+  }
+
+  /* Ajuste especial para pantallas pequeñas */
+  @media (max-width: 600px) {
+    .registroItem {
+      font-size: 14px;
+      padding: 10px;
+    }
+
+    .registroItem .botonesAccion button {
+      font-size: 14px;
+      padding: 8px;
+    }
+  }
 </style>
 
 
@@ -454,6 +562,12 @@
       }, 300);
     }
   });
+
+
+
+
+
+
 </script>
 
 
@@ -931,21 +1045,33 @@
               if (mostrarTodos || mesRegistro === mes.padStart(2, '0')) {
                 if (!territorioHtml) territorioHtml += `<h3 style="margin-top:15px;color:#444;">📍 Territorio ${tIndex + 1}</h3>`;
                 const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
-                let partesFecha = fecha.includes('-') ? fecha.split("-") : fecha.split("/");
-                let dia = partesFecha[0].padStart(2, "0");
-                let mesNum = parseInt(partesFecha[1], 10);
-                let anio = partesFecha[2];
                 let fechaFormateada = formatearFecha(fecha);
 
                 territorioHtml += `
-<p class="registroItem" style="background:#f8f8f8;padding:8px 10px;border-radius:6px;margin:5px 0;position:relative;color:#000;">
-  <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span> | Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFormateada}</span>
-  <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;gap:5px;">
+<p class="registroItem" style="
+  background:#f8f8f8;
+  padding:10px 12px;
+  border-radius:8px;
+  margin:8px 0;
+  position:relative;
+  color:#000;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:space-between;
+  gap:6px;
+">
+  <span style="flex:1; min-width:200px;">
+    <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por:
+    <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span> |
+    Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFormateada}</span>
+  </span>
+  <span style="display:flex;gap:5px;flex-shrink:0;">
     <button class="btnEditarInline" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#1976d2;color:white;border:none;border-radius:4px;cursor:pointer;">✏️</button>
     <button class="btnEliminar" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#e53935;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️</button>
     <button class="btnNota" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#ffb74d;color:white;border:none;border-radius:4px;cursor:pointer;">📝</button>
   </span>
-  ${tieneNota ? `<span style="position:absolute;top:4px;right:4px;width:8px;height:8px;background:black;border-radius:50%;display:inline-block;" title="Tiene nota"></span>` : ""}
+  ${tieneNota ? `<span style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:black;border-radius:50%;" title="Tiene nota"></span>` : ""}
 </p>`;
               }
             });
@@ -955,13 +1081,13 @@
         });
         if (!hayRegistros) html += "<p>No se encontraron registros para este mes.</p>";
         html += `
-<div style="margin-top:20px; display:flex; justify-content:center; gap:15px;">
+<div style="margin-top:20px; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
   <button id="borrarRegistros" style="padding:12px 18px;background:#e53935;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:transform 0.1s;">🗑️ Borrar registros del mes</button>
   <button id="btnExportarExcelPopup" style="padding:12px 18px;background:#43a047;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:transform 0.1s;">📤 Exportar a Excel</button>
-</div>
-`;
+</div>`;
         return html;
       }
+
 
       const modal = document.createElement("div");
       modal.style.position = "fixed"; modal.style.top = 0; modal.style.left = 0; modal.style.width = "100%"; modal.style.height = "100%"; modal.style.backgroundColor = "rgba(0,0,0,0.6)"; modal.style.zIndex = 9999; modal.style.overflowY = "auto"; modal.style.backdropFilter = "blur(3px)";
