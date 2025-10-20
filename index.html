@@ -1229,7 +1229,9 @@
 
     // Función para iniciar el registro de un capitán en un polígono
     function registrarCapitan(pol) {
-      popupRegistrarCapitan(pol); // abre el popup personalizado
+      if (window.popupActivo || window.menuActivo) return; // evita abrir otro popup si hay menú activo
+      window.popupActivo = true;      // marcamos que hay popup abierto
+      popupRegistrarCapitan(pol);     // abre el popup personalizado
     }
 
     // Pop up, mensaje de confirmacion de registro 
@@ -1255,13 +1257,11 @@
   `;
       document.body.appendChild(popup);
 
-      // Animación de entrada
       setTimeout(() => {
         popup.style.opacity = 1;
         popup.style.transform = "translate(-50%, -50%) scale(1)";
       }, 10);
 
-      // Desaparece después de 2 segundos
       setTimeout(() => {
         popup.style.opacity = 0;
         popup.style.transform = "translate(-50%, -50%) scale(0.8)";
@@ -1303,13 +1303,14 @@
     </div>
   `;
 
-      document.body.appendChild(modal); // añadir popup al HTML
+      document.body.appendChild(modal);
 
       // ================================
       // === Cerrar popup ===
       // ================================
       modal.querySelector("#cerrarPopupCapitan").addEventListener("click", () => {
         if (document.body.contains(modal)) document.body.removeChild(modal);
+        window.popupActivo = false; // liberamos popup activo
       });
 
       // ================================
@@ -1318,20 +1319,19 @@
       modal.querySelector("#guardarCapitan").addEventListener("click", () => {
         const capitan = modal.querySelector("#inputCapitan").value.trim();
         const fecha = modal.querySelector("#inputFecha").value.trim();
-        const comentario = modal.querySelector("#inputComentario").value.trim(); // nuevo campo
+        const comentario = modal.querySelector("#inputComentario").value.trim();
 
         if (!capitan || !fecha) return alert("Ingresa nombre y fecha");
 
         // Guardar en localStorage
         let registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
         if (!registros[pol._id]) registros[pol._id] = [];
-
-        // Guardamos todo en un string separado por '| Comentario:'
-        registros[pol._id].push(`Capitán: ${capitan} | Fecha: ${fecha} | Comentario: ${comentario}`);
+        registros[pol._id].push(`Capitán: ${capitan} | Fecha: ${fecha}${comentario ? " | Comentario: " + comentario : ""}`);
         localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
 
         // Cerrar popup y mostrar confirmación
         if (document.body.contains(modal)) document.body.removeChild(modal);
+        window.popupActivo = false;
         mostrarPopupConfirmacionCentro("Capitán registrado con éxito!");
 
         // Pintar polígono de gris indicando que está trabajado
@@ -1360,6 +1360,8 @@
         filtrarPorMes();
       });
     }
+
+
 
 
 
@@ -1499,7 +1501,7 @@
 
 
 
-    // ========================================================ENFOCAR TERRITORIO============================================================//
+    /// ========================================================ENFOCAR TERRITORIO============================================================//
 
     // ================================
     // === BLOQUE: Enfocar un territorio ===
@@ -1512,9 +1514,15 @@
       // ================================
       window.todosLosTerritorios.forEach(t => {
         t.eachLayer(pol => {
-          pol.off('click');          // Quitar evento click previo
-          pol.off('contextmenu');    // Quitar menú contextual previo
-          pol.setStyle(pol._originalStyle); // Restaurar estilo original
+          // Quitar eventos previos
+          pol.off('click');
+          pol.off('contextmenu');
+
+          // Restaurar estilo original
+          if (pol._originalStyle) pol.setStyle(pol._originalStyle);
+
+          // Limpiar referencias de popups activos
+          pol._popupActivo = false;
         });
       });
 
@@ -1572,6 +1580,7 @@
     }
 
     // =======================================================================================================================================//
+
 
 
 
