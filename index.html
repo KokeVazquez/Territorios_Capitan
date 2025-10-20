@@ -919,7 +919,7 @@
               const fechaYNota = partes[1]?.trim() || "";
               const fecha = fechaYNota.split('| Comentario:')[0]?.trim() || "";
               const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
-              const tieneNota = nota && nota.length > 0; // <--- definimos si hay nota
+              const tieneNota = nota && nota.length > 0;
 
               if (!fecha) return;
 
@@ -935,7 +935,7 @@
                 let dia = partesFecha[0].padStart(2, "0");
                 let mesNum = parseInt(partesFecha[1], 10);
                 let anio = partesFecha[2];
-                let fechaFormateada = `${dia}-${mesesCortos[mesNum - 1] || "???"}-${anio}`;
+                let fechaFormateada = formatearFecha(fecha);
 
                 territorioHtml += `
 <p class="registroItem" style="background:#f8f8f8;padding:8px 10px;border-radius:6px;margin:5px 0;position:relative;color:#000;">
@@ -970,8 +970,41 @@
 
       document.getElementById("cerrarModal").addEventListener("click", () => { document.body.removeChild(modal); });
 
-      // === Asignar eventos de edición inline, eliminación y notas ===
-      function asignarEventosInline() {
+      // === Función de formateo de fecha ===
+      function formatearFecha(fechaRaw) {
+        const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+        let dia, mesNum, anio;
+
+        if (!fechaRaw) return "???";
+
+        if (fechaRaw.includes("-")) {
+          const partes = fechaRaw.split("-");
+          if (partes[0].length === 4) { // YYYY-??-DD
+            anio = partes[0];
+            dia = partes[2].padStart(2, "0");
+            let m = partes[1].toLowerCase();
+            if (isNaN(m)) { mesNum = mesesCortos.indexOf(m) + 1; }
+            else { mesNum = parseInt(m, 10); }
+          } else { // DD-??-YYYY
+            dia = partes[0].padStart(2, "0");
+            anio = partes[2];
+            let m = partes[1].toLowerCase();
+            if (isNaN(m)) { mesNum = mesesCortos.indexOf(m) + 1; }
+            else { mesNum = parseInt(m, 10); }
+          }
+        } else if (fechaRaw.includes("/")) {
+          const partes = fechaRaw.split("/");
+          dia = partes[0].padStart(2, "0");
+          mesNum = parseInt(partes[1], 10);
+          anio = partes[2];
+        } else { return fechaRaw; }
+
+        if (!mesNum || mesNum < 1 || mesNum > 12) mesNum = 1;
+        return `${anio}-${mesesCortos[mesNum - 1]}-${dia}`;
+      }
+      {
+
+
         // Editar inline
         modal.querySelectorAll(".btnEditarInline").forEach(btn => {
           btn.addEventListener("click", () => {
@@ -980,40 +1013,117 @@
             const fechaSpan = item.querySelector(".fechaRegistro");
             const nombreActual = nombreSpan.textContent;
             const fechaActual = fechaSpan.textContent;
+
             const inputNombre = document.createElement("input");
             inputNombre.value = nombreActual;
-            inputNombre.style.width = "100px"; inputNombre.style.fontWeight = "bold"; inputNombre.style.color = "red";
-            const inputFecha = document.createElement("input"); inputFecha.type = "date";
-            const partes = fechaActual.split("-");
-            const dia = partes[0].padStart(2, "0");
-            const mes = ("ene feb mar abr may jun jul ago sep oct nov dic".split(" ").indexOf(partes[1].toLowerCase()) + 1).toString().padStart(2, "0");
-            const anio = partes[2];
-            inputFecha.value = `${anio}-${mes}-${dia}`; inputFecha.style.fontWeight = "bold"; inputFecha.style.color = "red";
-            nombreSpan.replaceWith(inputNombre); fechaSpan.replaceWith(inputFecha);
-            btn.textContent = "💾"; btn.style.background = "#43a047";
+            inputNombre.style.width = "100px";
+            inputNombre.style.fontWeight = "bold";
+            inputNombre.style.color = "red";
+
+            const inputFecha = document.createElement("input");
+            inputFecha.type = "date";
+            inputFecha.style.fontWeight = "bold";
+            inputFecha.style.color = "red";
+
+            function formatearFecha(fechaRaw) {
+              let dia, mes, anio;
+
+              const meses = {
+                ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5,
+                jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11
+              };
+
+              if (fechaRaw.includes("-")) {
+                const partes = fechaRaw.split("-");
+                if (partes[0].length === 4) { // YYYY-??-DD
+                  anio = parseInt(partes[0], 10);
+                  let mesStr = partes[1].toLowerCase();
+                  mes = meses[mesStr] !== undefined ? meses[mesStr] : parseInt(mesStr, 10) - 1;
+                  dia = parseInt(partes[2], 10);
+                } else { // DD-??-YYYY
+                  dia = parseInt(partes[0], 10);
+                  let mesStr = partes[1].toLowerCase();
+                  mes = meses[mesStr] !== undefined ? meses[mesStr] : parseInt(mesStr, 10) - 1;
+                  anio = parseInt(partes[2], 10);
+                }
+              } else if (fechaRaw.includes("/")) {
+                const partes = fechaRaw.split("/");
+                dia = parseInt(partes[0], 10);
+                mes = parseInt(partes[1], 10) - 1;
+                anio = parseInt(partes[2], 10);
+              } else {
+                return fechaRaw; // fallback
+              }
+
+              const fechaObj = new Date(anio, mes, dia);
+              const mesCorto = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(fechaObj);
+              const diaStr = String(fechaObj.getDate()).padStart(2, "0");
+              return `${anio}-${mesCorto.toLowerCase()}-${diaStr}`;
+            }
+
+
+            // Inicializar inputFecha con valor compatible YYYY-MM-DD
+            let fechaParts = fechaActual.includes("-") ? fechaActual.split("-") : fechaActual.split("/");
+            let inputFechaValue;
+            if (fechaParts[0].length === 4) { // YYYY-MM-DD
+              inputFechaValue = fechaActual.replace(/-[a-z]+-/i, (m) => {
+                const mesIndex = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"].indexOf(m.slice(1, -1).toLowerCase()) + 1;
+                return "-" + String(mesIndex).padStart(2, "0") + "-";
+              });
+            } else { // DD-MM-YYYY
+              inputFechaValue = `${fechaParts[2]}-${fechaParts[1].padStart(2, "0")}-${fechaParts[0].padStart(2, "0")}`;
+            }
+            inputFecha.value = inputFechaValue;
+
+            nombreSpan.replaceWith(inputNombre);
+            fechaSpan.replaceWith(inputFecha);
+
+            btn.textContent = "💾";
+            btn.style.background = "#43a047";
+
             btn.onclick = () => {
               const nuevoNombre = inputNombre.value.trim();
-              const nuevaFechaRaw = inputFecha.value;
-              if (!nuevoNombre || !nuevaFechaRaw) { alert("Nombre y fecha no pueden estar vacíos"); return; }
-              const fechaParts = nuevaFechaRaw.split("-");
-              const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-              const fechaFormateada = `${fechaParts[2].padStart(2, "0")}-${mesesCortos[parseInt(fechaParts[1], 10) - 1]}-${fechaParts[0]}`;
+              const nuevaFechaRaw = inputFecha.value; // formato YYYY-MM-DD
+              if (!nuevoNombre) { alert("Nombre no puede estar vacío"); return; }
+
+              const fechaParaGuardar = formatearFecha(nuevaFechaRaw);
+
               const territorioId = btn.dataset.territorio;
               const polId = btn.dataset.pol;
               const index = parseInt(btn.dataset.index, 10);
               const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-              // mantener nota existente si hay
+
               const nota = registros[polId][index].split('| Comentario:')[1]?.trim() || "";
-              registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaFormateada}${nota ? " | Comentario: " + nota : ""}`;
+              registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaParaGuardar}${nota ? " | Comentario: " + nota : ""}`;
               localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-              const spanNombre = document.createElement("span"); spanNombre.className = "nombreCapitan"; spanNombre.textContent = nuevoNombre; spanNombre.style.fontWeight = "bold"; spanNombre.style.color = "red";
-              const spanFecha = document.createElement("span"); spanFecha.className = "fechaRegistro"; spanFecha.textContent = fechaFormateada; spanFecha.style.fontWeight = "bold"; spanFecha.style.color = "red";
-              inputNombre.replaceWith(spanNombre); inputFecha.replaceWith(spanFecha);
-              btn.textContent = "✏️"; btn.style.background = "#1976d2";
+
+              const spanNombre = document.createElement("span");
+              spanNombre.className = "nombreCapitan";
+              spanNombre.textContent = nuevoNombre;
+              spanNombre.style.fontWeight = "bold";
+              spanNombre.style.color = "red";
+
+              const spanFecha = document.createElement("span");
+              spanFecha.className = "fechaRegistro";
+              spanFecha.textContent = fechaParaGuardar;
+              spanFecha.style.fontWeight = "bold";
+              spanFecha.style.color = "red";
+
+              inputNombre.replaceWith(spanNombre);
+              inputFecha.replaceWith(spanFecha);
+
+              btn.textContent = "✏️";
+              btn.style.background = "#1976d2";
               asignarEventosInline();
             };
           });
         });
+
+
+
+
+
+
 
         // Eliminar registro individual
         modal.querySelectorAll(".btnEliminar").forEach(btn => {
