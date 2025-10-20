@@ -999,7 +999,7 @@
     });
 
     // =========================================================================================================================
-    // === MOSTRAR TODAS LAS NOTAS EN MODAL (CLICK DERECHO O MANTENER) ===
+    // === MOSTRAR TODAS LAS NOTAS EN MODAL (CLICK DERECHO O MANTENER) CON EDITAR/ELIMINAR BONITO ===
     // =========================================================================================================================
     const modalNotas = document.createElement("div");
     modalNotas.id = "modalNotas";
@@ -1040,19 +1040,22 @@
         territorio.eachLayer(function (pol) {
           const notasPol = notasTerritorio[pol._id];
           if (notasPol && notasPol.length > 0) {
-            notasPol.forEach(nota => {
+            notasPol.forEach((nota, index) => {
               if (typeof nota === "string") {
                 todasLasNotas.push({
+                  territorioId: territorio._id,
                   territorio: territorio.options?.name || territorio._id,
                   cuadra: pol._id,
-                  contenido: nota
+                  contenido: nota,
+                  index: index
                 });
               } else if (typeof nota === "object") {
                 todasLasNotas.push({
+                  territorioId: territorio._id,
                   territorio: territorio.options?.name || territorio._id,
                   cuadra: pol._id,
-                  fecha: nota.fecha || "-",
-                  contenido: nota.texto || JSON.stringify(nota)
+                  contenido: nota.texto || JSON.stringify(nota),
+                  index: index
                 });
               }
             });
@@ -1065,22 +1068,80 @@
         return;
       }
 
-      // ==================== MODAL CONTENT ====================
       modalContent.innerHTML = "<h2>Todas las Notas Registradas</h2><hr>";
+
       todasLasNotas.forEach(n => {
         const notaDiv = document.createElement("div");
         notaDiv.style.marginBottom = "10px";
+        notaDiv.style.padding = "10px";
+        notaDiv.style.border = "1px solid #ccc";
+        notaDiv.style.borderRadius = "8px";
+        notaDiv.style.display = "flex";
+        notaDiv.style.justifyContent = "space-between";
+        notaDiv.style.alignItems = "center";
 
-        const territorioNum = n.territorio.replace(/\D/g, ''); // solo números
-        const cuadraNum = n.cuadra.replace(/\D/g, ''); // solo números
+        const territorioNum = n.territorio.replace(/\D/g, '');
+        const cuadraNum = n.cuadra.replace(/\D/g, '');
 
-        notaDiv.innerHTML = `<b>Territorio:</b> ${territorioNum} <br>
-                         <b>Cuadra:</b> ${cuadraNum} <br>
-                         <b>Nota:</b> <span style="color:red; font-weight:bold;">${n.contenido}</span> <hr>`;
+        const textoNota = document.createElement("div");
+        textoNota.innerHTML = `<b>Territorio:</b> ${territorioNum} <br>
+                           <b>Cuadra:</b> ${cuadraNum} <br>
+                           <b>Nota:</b> <span style="color:red; font-weight:bold;">${n.contenido}</span>`;
+
+        const botonesDiv = document.createElement("div");
+        botonesDiv.style.display = "flex";
+        botonesDiv.style.gap = "5px";
+
+        // Botón Editar
+        const btnEditar = document.createElement("button");
+        btnEditar.textContent = "Editar";
+        btnEditar.style.backgroundColor = "#4CAF50";
+        btnEditar.style.color = "#fff";
+        btnEditar.style.border = "none";
+        btnEditar.style.padding = "5px 10px";
+        btnEditar.style.borderRadius = "5px";
+        btnEditar.style.cursor = "pointer";
+        btnEditar.addEventListener("click", () => {
+          const nuevoTexto = prompt("Editar nota:", n.contenido);
+          if (nuevoTexto !== null) {
+            // Actualizar localStorage
+            const notasTerritorio = JSON.parse(localStorage.getItem(n.territorioId + "_notas") || "{}");
+            notasTerritorio[n.cuadra][n.index] = nuevoTexto;
+            localStorage.setItem(n.territorioId + "_notas", JSON.stringify(notasTerritorio));
+
+            // Actualizar en el modal
+            textoNota.querySelector("span").textContent = nuevoTexto;
+          }
+        });
+
+        // Botón Eliminar
+        const btnEliminar = document.createElement("button");
+        btnEliminar.textContent = "Eliminar";
+        btnEliminar.style.backgroundColor = "#f44336";
+        btnEliminar.style.color = "#fff";
+        btnEliminar.style.border = "none";
+        btnEliminar.style.padding = "5px 10px";
+        btnEliminar.style.borderRadius = "5px";
+        btnEliminar.style.cursor = "pointer";
+        btnEliminar.addEventListener("click", () => {
+          if (confirm("¿Seguro que quieres eliminar esta nota?")) {
+            const notasTerritorio = JSON.parse(localStorage.getItem(n.territorioId + "_notas") || "{}");
+            notasTerritorio[n.cuadra].splice(n.index, 1);
+            localStorage.setItem(n.territorioId + "_notas", JSON.stringify(notasTerritorio));
+            notaDiv.remove();
+          }
+        });
+
+        botonesDiv.appendChild(btnEditar);
+        botonesDiv.appendChild(btnEliminar);
+
+        notaDiv.appendChild(textoNota);
+        notaDiv.appendChild(botonesDiv);
         modalContent.appendChild(notaDiv);
       });
+
       modalNotas.style.display = "flex";
-    }); // <- CERRAMOS EL EVENTO CONTEXTMENU AQUÍ
+    });
 
     // ==================== MANTENER PULSADO ====================
     let pressTimer;
@@ -1092,6 +1153,8 @@
     });
     btn.addEventListener("mouseup", function () { clearTimeout(pressTimer); });
     btn.addEventListener("mouseleave", function () { clearTimeout(pressTimer); });
+
+
 
 
 
