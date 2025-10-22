@@ -2809,21 +2809,12 @@
         transition:color 0.2s;
       ">✖</button>
 
-      <h2 style="
-        text-align:center;
-        margin-bottom:18px;
-        color:#111827;
-      ">Registrar Territorio</h2>
+      <h2 style="text-align:center;margin-bottom:18px;color:#111827;">Registrar Territorio</h2>
 
       <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
         Nombre Capitán
         <input type="text" id="capitanTerritorio" style="
-          width:100%;
-          padding:10px;
-          border:1px solid #d1d5db;
-          border-radius:8px;
-          margin-top:4px;
-          font-size:15px;
+          width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
         "/>
       </label>
 
@@ -2841,14 +2832,30 @@
 
       <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
         Territorio
-        <select id="selectTerritorio" style="
-          width:100%;
-          padding:10px;
-          border:1px solid #d1d5db;
-          border-radius:8px;
-          margin-top:4px;
-          font-size:15px;
-        "></select>
+        <div id="dropdownTerritorio" style="position:relative;margin-top:4px;">
+          <div id="selectedTerritorio" style="
+            padding:10px 12px;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            background:#f0f0f0;
+            cursor:pointer;
+            font-size:15px;
+          ">Seleccionar Territorio</div>
+          <div id="listaTerritorios" style="
+            position:absolute;
+            top:100%;
+            left:0;
+            width:100%;
+            max-height:180px;
+            overflow-y:auto;
+            background:#fff;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            box-shadow:0 3px 8px rgba(0,0,0,0.15);
+            display:none;
+            z-index:1000;
+          "></div>
+        </div>
       </label>
 
       <div id="cuadrasCheckbox" style="
@@ -2889,22 +2896,10 @@
     </div>
 
     <style>
-      @keyframes fadeIn {
-        from {opacity:0; transform:scale(0.95);}
-        to {opacity:1; transform:scale(1);}
-      }
-      @keyframes fadeOut {
-        from {opacity:1; transform:scale(1);}
-        to {opacity:0; transform:scale(0.95);}
-      }
-      @keyframes fadeInBg {
-        from {opacity:0;}
-        to {opacity:1;}
-      }
-      @keyframes fadeOutBg {
-        from {opacity:1;}
-        to {opacity:0;}
-      }
+      @keyframes fadeIn { from {opacity:0; transform:scale(0.95);} to {opacity:1; transform:scale(1);} }
+      @keyframes fadeOut { from {opacity:1; transform:scale(1);} to {opacity:0; transform:scale(0.95);} }
+      @keyframes fadeInBg { from {opacity:0;} to {opacity:1;} }
+      @keyframes fadeOutBg { from {opacity:1;} to {opacity:0;} }
       #guardarTerritorio:hover { background:#15803d; }
       #cerrarModalTerritorio:hover { color:#111; }
     </style>
@@ -2918,39 +2913,53 @@
         modal.style.animation = "fadeOutBg 0.25s forwards";
         setTimeout(() => document.body.removeChild(modal), 220);
       };
-
       document.getElementById('cerrarModalTerritorio').addEventListener('click', cerrarModal);
 
-      // Llenar select con territorios
-      const selectTerr = document.getElementById('selectTerritorio');
+      // Dropdown personalizado de territorios
+      const selectedTerritorio = document.getElementById("selectedTerritorio");
+      const listaTerritorios = document.getElementById("listaTerritorios");
+
       window.todosLosTerritorios.forEach((t, i) => {
-        const option = document.createElement('option');
-        option.value = i;
-        option.textContent = `Territorio ${i + 1}`;
-        selectTerr.appendChild(option);
+        const div = document.createElement("div");
+        div.textContent = `Territorio ${i + 1}`;
+        div.dataset.index = i;
+        div.style.cssText = "padding:8px;cursor:pointer;";
+        div.addEventListener("mouseover", () => div.style.background = "#f0f0f0");
+        div.addEventListener("mouseout", () => div.style.background = "#fff");
+        div.addEventListener("click", () => {
+          selectedTerritorio.textContent = `Territorio ${i + 1}`;
+          selectedTerritorio.dataset.index = i;
+          listaTerritorios.style.display = "none";
+          cargarCuadras(); // actualizar cuadras al cambiar territorio
+        });
+        listaTerritorios.appendChild(div);
+      });
+
+      selectedTerritorio.addEventListener("click", () => {
+        listaTerritorios.style.display = listaTerritorios.style.display === "block" ? "none" : "block";
       });
 
       const cuadrasDiv = document.getElementById('cuadrasCheckbox');
-
       function cargarCuadras() {
-        const territorio = window.todosLosTerritorios[selectTerr.value];
+        const idx = selectedTerritorio.dataset.index || 0;
+        const territorio = window.todosLosTerritorios[idx];
         let html = "";
         territorio.eachLayer(pol => {
           const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
           html += `
-        <label style="display:block;margin:6px 0;color:#374151;">
-          <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" style="margin-right:6px;">
-          Cuadra ${cuadraLimpia}
-        </label>`;
+      <label style="display:block;margin:6px 0;color:#374151;">
+        <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" style="margin-right:6px;">
+        Cuadra ${cuadraLimpia}
+      </label>`;
         });
         cuadrasDiv.innerHTML = html;
       }
+      cargarCuadras(); // inicial
 
-      selectTerr.addEventListener('change', cargarCuadras);
-      cargarCuadras();
-
+      // Guardar registros
       document.getElementById('guardarTerritorio').addEventListener('click', () => {
-        const territorio = window.todosLosTerritorios[selectTerr.value];
+        const idx = selectedTerritorio.dataset.index || 0;
+        const territorio = window.todosLosTerritorios[idx];
         const capitan = document.getElementById('capitanTerritorio').value.trim().replace(/^Cuadra\s*\d+\s*\|\s*/i, "");
         const fecha = document.getElementById('fechaTerritorio').value;
         const comentario = document.getElementById('comentarioTerritorio').value.trim();
@@ -2960,21 +2969,19 @@
         if (checkboxes.length === 0) return alert("Selecciona al menos una cuadra");
 
         const registros = JSON.parse(localStorage.getItem(`${territorio._id}_capitanes`) || "{}");
-
         checkboxes.forEach(cb => {
           const polId = cb.value;
-          const cuadraNum = cb.dataset.cuadra;
           if (!registros[polId]) registros[polId] = [];
           const registroTexto = `Trabajado por: ${capitan} | Fecha: ${fecha}${comentario ? " | " + comentario : ""}`;
           registros[polId].push(registroTexto);
           territorio.eachLayer(pol => { if (pol._id === polId) pol._selected = true; });
         });
-
         localStorage.setItem(`${territorio._id}_capitanes`, JSON.stringify(registros));
         alert("Registros guardados ✅");
         cerrarModal();
       });
     });
+
 
 
 
