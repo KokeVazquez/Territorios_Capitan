@@ -1237,373 +1237,422 @@
 
 
     // =========================================================================================================================================
-    // === Botón Territorios Terminados con notas integradas ===
+    // === Botón Territorios Terminados con notas integradas (bloque corregido, listo para reemplazar) ===
     // =========================================================================================================================================
-
     document.getElementById("btnTerritoriosTerminados").addEventListener("click", function () {
-
       const mes = document.getElementById('filtroMes').value;
       if (!mes) { alert("Selecciona primero un mes o 'Todos los meses' para mostrar los territorios terminados."); return; }
+      const mostrarTodos = (mes === "todos");
 
-      let mostrarTodos = (mes === "todos");
-
-      let mesNombre = mostrarTodos
-        ? "Todos los meses"
-        : new Date(2025, parseInt(mes) - 1).toLocaleString('es-MX', { month: 'long' });
-
-      function generarHtml() {
-        let html = `<h2 style="text-align:center; color:#333;">🗺️ Territorios terminados - ${mesNombre}</h2><hr style="margin-bottom:15px;">`;
-        let hayRegistros = false;
+      // formateo reutilizable (devuelve formato mostrado en UI: YYYY-mesCorto-DD)
+      function formatearFechaParaMostrar(fechaRaw) {
+        if (!fechaRaw) return "???";
         const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-        window.todosLosTerritorios.forEach((territorio, tIndex) => {
-          let territorioHtml = "";
-          territorio.eachLayer(pol => {
-            if (!pol._selected && !mostrarTodos) return;
-            const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
-            (registros[pol._id] || []).forEach(reg => {
-              const partes = reg.split('| Fecha:');
-              const capitan = partes[0].replace("Capitán:", "").replace("Trabajado por:", "").trim();
-              const fechaYNota = partes[1]?.trim() || "";
-              const fecha = fechaYNota.split('| Comentario:')[0]?.trim() || "";
-              const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
-              const tieneNota = nota && nota.length > 0;
+        // admitir formatos: YYYY-MM-DD or DD-MM-YYYY or DD/MM/YYYY or YYYY-mesCorto-DD
+        try {
+          if (fechaRaw.includes("/")) {
+            const p = fechaRaw.split("/");
+            return `${p[2]}-${mesesCortos[parseInt(p[1], 10) - 1] || "???"}-${String(p[0]).padStart(2, "0")}`;
+          }
+          if (fechaRaw.includes("-")) {
+            const p = fechaRaw.split("-");
+            if (p[0].length === 4) { // YYYY-??-DD
+              const año = p[0], mesStr = p[1], dia = String(p[2]).padStart(2, "0");
+              const mesNum = isNaN(mesStr) ? (mesesCortos.indexOf(mesStr.toLowerCase()) + 1) : parseInt(mesStr, 10);
+              return `${año}-${(mesesCortos[mesNum - 1] || "??")}-${dia}`;
+            } else { // DD-??-YYYY
+              const dia = String(p[0]).padStart(2, "0"), mesStr = p[1], año = p[2];
+              const mesNum = isNaN(mesStr) ? (mesesCortos.indexOf(mesStr.toLowerCase()) + 1) : parseInt(mesStr, 10);
+              return `${año}-${(mesesCortos[mesNum - 1] || "??")}-${dia}`;
+            }
+          }
+          return fechaRaw;
+        } catch (e) { return fechaRaw; }
+      }
 
-              if (!fecha) return;
+      // Construir HTML del modal con registros (basado en tus datos locales)
+      function generarHtmlModal() {
+        let html = `<div style="padding:20px;max-width:900px;margin:30px auto;background:#fff;border-radius:12px;position:relative;">
+      <button id="cerrarModalTT" style="position:absolute;right:12px;top:12px;border:none;background:none;font-size:20px;cursor:pointer;">✖</button>
+      <h2 style="text-align:center;margin-top:0;">🗺️ Territorios terminados - ${mostrarTodos ? "Todos los meses" : (new Date(2025, parseInt(mes) - 1).toLocaleString('es-MX', { month: 'long' }))}</h2>
+      <hr style="margin-bottom:12px;" />
+      <div id="listaRegistros" style="max-height:60vh; overflow:auto; padding-right:8px;"></div>
+      <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+        <button id="borrarRegistros" style="padding:10px 16px;background:#e53935;color:#fff;border:none;border-radius:8px;cursor:pointer;">🗑️ Borrar registros del mes</button>
+        <button id="btnExportarExcelPopup" style="padding:10px 16px;background:#43a047;color:#fff;border:none;border-radius:8px;cursor:pointer;">📤 Exportar a Excel</button>
+        <button id="btnCerrarModal" style="padding:10px 16px;background:#777;color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button>
+      </div>
+    </div>`;
 
-              let mesRegistro = '';
-              if (fecha.includes('-')) mesRegistro = fecha.split('-')[1];
-              else if (fecha.includes('/')) mesRegistro = fecha.split('/')[1];
-              else if (fecha.length >= 5) mesRegistro = fecha.slice(3, 5);
-
-              if (mostrarTodos || mesRegistro === mes.padStart(2, '0')) {
-                if (!territorioHtml) territorioHtml += `<h3 style="margin-top:15px;color:#444;">📍 Territorio ${tIndex + 1}</h3>`;
-                const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
-                let fechaFormateada = formatearFecha(fecha);
-
-                territorioHtml += `
-<p class="registroItem" style="
-  background:#f8f8f8;
-  padding:10px 12px;
-  border-radius:8px;
-  margin:8px 0;
-  position:relative;
-  color:#000;
-  display:flex;
-  flex-wrap:wrap;
-  align-items:center;
-  justify-content:space-between;
-  gap:6px;
-">
-  <span style="flex:1; min-width:200px;">
-    <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por:
-    <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span> |
-    Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFormateada}</span>
-  </span>
-  <span style="display:flex;gap:5px;flex-shrink:0;">
-    <button class="btnEditarInline" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#1976d2;color:white;border:none;border-radius:4px;cursor:pointer;">✏️</button>
-    <button class="btnEliminar" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#e53935;color:white;border:none;border-radius:4px;cursor:pointer;">🗑️</button>
-    <button class="btnNota" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${registros[pol._id].indexOf(reg)}" style="padding:2px 6px;background:#ffb74d;color:white;border:none;border-radius:4px;cursor:pointer;">📝</button>
-  </span>
-  ${tieneNota ? `<span style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:black;border-radius:50%;" title="Tiene nota"></span>` : ""}
-</p>`;
-              }
-            });
-
-          });
-          if (territorioHtml) { html += territorioHtml; hayRegistros = true; }
-        });
-        if (!hayRegistros) html += "<p>No se encontraron registros para este mes.</p>";
-        html += `
-<div style="margin-top:20px; display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
-  <button id="borrarRegistros" style="padding:12px 18px;background:#e53935;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:transform 0.1s;">🗑️ Borrar registros del mes</button>
-  <button id="btnExportarExcelPopup" style="padding:12px 18px;background:#43a047;color:white;border:none;border-radius:8px;font-size:16px;cursor:pointer;transition:transform 0.1s;">📤 Exportar a Excel</button>
-</div>`;
         return html;
       }
 
+      // Crea modal
+      const overlay = document.createElement("div");
+      overlay.id = "modalTerritoriosTerminados";
+      overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;";
+      overlay.innerHTML = generarHtmlModal();
+      document.body.appendChild(overlay);
 
-      const modal = document.createElement("div");
-      modal.style.position = "fixed"; modal.style.top = 0; modal.style.left = 0; modal.style.width = "100%"; modal.style.height = "100%"; modal.style.backgroundColor = "rgba(0,0,0,0.6)"; modal.style.zIndex = 9999; modal.style.overflowY = "auto"; modal.style.backdropFilter = "blur(3px)";
-      modal.innerHTML = `<div id="contenidoModal" style="background:#fff;padding:25px;margin:60px auto;width:85%;max-width:750px;border-radius:12px;position:relative;box-shadow:0 5px 20px rgba(0,0,0,0.3);transition: all 0.3s ease;"><button id="cerrarModal" style="position:absolute;top:10px;right:10px;font-size:20px;background:none;border:none;cursor:pointer;">✖</button>${generarHtml()}</div>`;
-      document.body.appendChild(modal);
+      // Referencias
+      const contLista = overlay.querySelector("#listaRegistros");
 
-      document.getElementById("cerrarModal").addEventListener("click", () => { document.body.removeChild(modal); });
-
-      // === Función de formateo de fecha ===
-      function formatearFecha(fechaRaw) {
+      // Llenar registros desde window.todosLosTerritorios
+      function cargarRegistrosEnLista() {
+        contLista.innerHTML = "";
+        let hay = false;
         const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-        let dia, mesNum, anio;
 
-        if (!fechaRaw) return "???";
+        window.todosLosTerritorios.forEach((territorio, tIndex) => {
+          let bloqueTerr = "";
+          territorio.eachLayer(pol => {
+            // si no está seleccionado y no pedimos todos, ignorar
+            if (!pol._selected && !mostrarTodos) return;
+            const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
+            (registros[pol._id] || []).forEach((reg, regIndex) => {
+              const partes = reg.split('| Fecha:');
+              const capitan = (partes[0] || "").replace("Capitán:", "").replace("Trabajado por:", "").trim();
+              const fechaYNota = (partes[1] || "").trim();
+              const fechaRaw = fechaYNota.split('| Comentario:')[0]?.trim() || "";
+              const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
+              if (!fechaRaw) return;
 
-        if (fechaRaw.includes("-")) {
-          const partes = fechaRaw.split("-");
-          if (partes[0].length === 4) { // YYYY-??-DD
-            anio = partes[0];
-            dia = partes[2].padStart(2, "0");
-            let m = partes[1].toLowerCase();
-            if (isNaN(m)) { mesNum = mesesCortos.indexOf(m) + 1; }
-            else { mesNum = parseInt(m, 10); }
-          } else { // DD-??-YYYY
-            dia = partes[0].padStart(2, "0");
-            anio = partes[2];
-            let m = partes[1].toLowerCase();
-            if (isNaN(m)) { mesNum = mesesCortos.indexOf(m) + 1; }
-            else { mesNum = parseInt(m, 10); }
+              // extraer mes del string de fecha
+              let mesRegistro = "";
+              if (fechaRaw.includes('-')) mesRegistro = fechaRaw.split('-')[1];
+              else if (fechaRaw.includes('/')) mesRegistro = fechaRaw.split('/')[1];
+              else if (fechaRaw.length >= 5) mesRegistro = fechaRaw.slice(3, 5);
+
+              if (mostrarTodos || mesRegistro === String(mes).padStart(2, '0')) {
+                if (!bloqueTerr) bloqueTerr += `<h3 style="margin:10px 0 6px;color:#444;">📍 Territorio ${tIndex + 1}</h3>`;
+                const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
+                const fechaForm = formatearFechaParaMostrar(fechaRaw);
+                bloqueTerr += `
+              <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${regIndex}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;position:relative;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+                <div style="min-width:220px;">
+                  <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span><br>
+                  Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaForm}</span>
+                  ${nota ? `<div style="margin-top:6px;color:#333;"><small>Nota: ${nota}</small></div>` : ""}
+                </div>
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                  <button class="btnEditarInline" style="padding:6px;border-radius:6px;border:none;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
+                  <button class="btnEliminar" style="padding:6px;border-radius:6px;border:none;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
+                  <button class="btnNota" style="padding:6px;border-radius:6px;border:none;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
+                </div>
+              </div>
+            `;
+                hay = true;
+              }
+            });
+          });
+          if (bloqueTerr) {
+            contLista.insertAdjacentHTML('beforeend', bloqueTerr);
           }
-        } else if (fechaRaw.includes("/")) {
-          const partes = fechaRaw.split("/");
-          dia = partes[0].padStart(2, "0");
-          mesNum = parseInt(partes[1], 10);
-          anio = partes[2];
-        } else { return fechaRaw; }
+        });
 
-        if (!mesNum || mesNum < 1 || mesNum > 12) mesNum = 1;
-        return `${anio}-${mesesCortos[mesNum - 1]}-${dia}`;
+        if (!hay) contLista.innerHTML = `<p style="color:#666;margin:6px 0;">No se encontraron registros para este mes.</p>`;
       }
-      {
 
+      cargarRegistrosEnLista();
 
-        // Editar inline
-        modal.querySelectorAll(".btnEditarInline").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const item = btn.closest(".registroItem");
-            const nombreSpan = item.querySelector(".nombreCapitan");
-            const fechaSpan = item.querySelector(".fechaRegistro");
-            const nombreActual = nombreSpan.textContent;
-            const fechaActual = fechaSpan.textContent;
+      // -------------------------
+      // Delegación de eventos del modal
+      // -------------------------
+      overlay.addEventListener('click', function (e) {
+        const target = e.target;
 
-            const inputNombre = document.createElement("input");
-            inputNombre.value = nombreActual;
-            inputNombre.style.width = "100px";
-            inputNombre.style.fontWeight = "bold";
-            inputNombre.style.color = "red";
+        // cerrar
+        if (target.id === 'cerrarModalTT' || target.id === 'btnCerrarModal') {
+          overlay.remove();
+          return;
+        }
 
-            const inputFecha = document.createElement("input");
-            inputFecha.type = "date";
-            inputFecha.style.fontWeight = "bold";
-            inputFecha.style.color = "red";
-
-            function formatearFecha(fechaRaw) {
-              let dia, mes, anio;
-
-              const meses = {
-                ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5,
-                jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11
-              };
-
-              if (fechaRaw.includes("-")) {
-                const partes = fechaRaw.split("-");
-                if (partes[0].length === 4) { // YYYY-??-DD
-                  anio = parseInt(partes[0], 10);
-                  let mesStr = partes[1].toLowerCase();
-                  mes = meses[mesStr] !== undefined ? meses[mesStr] : parseInt(mesStr, 10) - 1;
-                  dia = parseInt(partes[2], 10);
-                } else { // DD-??-YYYY
-                  dia = parseInt(partes[0], 10);
-                  let mesStr = partes[1].toLowerCase();
-                  mes = meses[mesStr] !== undefined ? meses[mesStr] : parseInt(mesStr, 10) - 1;
-                  anio = parseInt(partes[2], 10);
-                }
-              } else if (fechaRaw.includes("/")) {
-                const partes = fechaRaw.split("/");
-                dia = parseInt(partes[0], 10);
-                mes = parseInt(partes[1], 10) - 1;
-                anio = parseInt(partes[2], 10);
-              } else {
-                return fechaRaw; // fallback
-              }
-
-              const fechaObj = new Date(anio, mes, dia);
-              const mesCorto = new Intl.DateTimeFormat("es-ES", { month: "short" }).format(fechaObj);
-              const diaStr = String(fechaObj.getDate()).padStart(2, "0");
-              return `${anio}-${mesCorto.toLowerCase()}-${diaStr}`;
-            }
-
-
-            // Inicializar inputFecha con valor compatible YYYY-MM-DD
-            let fechaParts = fechaActual.includes("-") ? fechaActual.split("-") : fechaActual.split("/");
-            let inputFechaValue;
-            if (fechaParts[0].length === 4) { // YYYY-MM-DD
-              inputFechaValue = fechaActual.replace(/-[a-z]+-/i, (m) => {
-                const mesIndex = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"].indexOf(m.slice(1, -1).toLowerCase()) + 1;
-                return "-" + String(mesIndex).padStart(2, "0") + "-";
+        // BORRAR registros del mes (botón principal)
+        if (target.id === 'borrarRegistros') {
+          const confirmar = confirm(mostrarTodos ?
+            "⚠️ Esto borrará TODOS los registros guardados. ¿Seguro que quieres continuar?" :
+            "¿Estás seguro de que quieres borrar los registros de este mes?");
+          if (!confirmar) return;
+          // proceso de borrado: recorrer territorios y filtrar
+          window.todosLosTerritorios.forEach(territorio => {
+            const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
+            Object.keys(registros).forEach(polId => {
+              registros[polId] = registros[polId].filter(reg => {
+                const fecha = reg.split('| Fecha:')[1]?.trim() || '';
+                let mesRegistro = '';
+                if (fecha.includes('-')) mesRegistro = fecha.split('-')[1];
+                else if (fecha.includes('/')) mesRegistro = fecha.split('/')[1];
+                else if (fecha.length >= 5) mesRegistro = fecha.slice(3, 5);
+                // conservar solo aquellos que NO correspondan al mes actual cuando NO mostrarTodos
+                return mostrarTodos ? false : mesRegistro !== String(mes).padStart(2, '0');
               });
-            } else { // DD-MM-YYYY
-              inputFechaValue = `${fechaParts[2]}-${fechaParts[1].padStart(2, "0")}-${fechaParts[0].padStart(2, "0")}`;
-            }
-            inputFecha.value = inputFechaValue;
-
-            nombreSpan.replaceWith(inputNombre);
-            fechaSpan.replaceWith(inputFecha);
-
-            btn.textContent = "💾";
-            btn.style.background = "#43a047";
-
-            btn.onclick = () => {
-              const nuevoNombre = inputNombre.value.trim();
-              const nuevaFechaRaw = inputFecha.value; // formato YYYY-MM-DD
-              if (!nuevoNombre) { alert("Nombre no puede estar vacío"); return; }
-
-              const fechaParaGuardar = formatearFecha(nuevaFechaRaw);
-
-              const territorioId = btn.dataset.territorio;
-              const polId = btn.dataset.pol;
-              const index = parseInt(btn.dataset.index, 10);
-              const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-
-              const nota = registros[polId][index].split('| Comentario:')[1]?.trim() || "";
-              registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaParaGuardar}${nota ? " | Comentario: " + nota : ""}`;
-              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-
-              const spanNombre = document.createElement("span");
-              spanNombre.className = "nombreCapitan";
-              spanNombre.textContent = nuevoNombre;
-              spanNombre.style.fontWeight = "bold";
-              spanNombre.style.color = "red";
-
-              const spanFecha = document.createElement("span");
-              spanFecha.className = "fechaRegistro";
-              spanFecha.textContent = fechaParaGuardar;
-              spanFecha.style.fontWeight = "bold";
-              spanFecha.style.color = "red";
-
-              inputNombre.replaceWith(spanNombre);
-              inputFecha.replaceWith(spanFecha);
-
-              btn.textContent = "✏️";
-              btn.style.background = "#1976d2";
-              asignarEventosInline();
-            };
+            });
+            localStorage.setItem(territorio._id + "_capitanes", JSON.stringify(registros));
           });
-        });
 
-
-
-
-
-
-
-        // Eliminar registro individual
-        modal.querySelectorAll(".btnEliminar").forEach(btn => {
-          btn.addEventListener("click", () => {
-            if (!confirm("⚠️ ¿Estás seguro de que quieres eliminar este registro?")) return;
-            const territorioId = btn.dataset.territorio;
-            const polId = btn.dataset.pol;
-            const index = parseInt(btn.dataset.index, 10);
-            const item = btn.closest(".registroItem");
-            item.style.transition = "all 0.5s ease-in"; item.style.transformOrigin = "bottom right"; item.style.transform = "scaleY(0) scaleX(0.1)"; item.style.opacity = "0";
-            setTimeout(() => {
-              const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-              registros[polId].splice(index, 1); localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-              if (!registros[polId] || registros[polId].length === 0) {
-                const tituloTerritorio = item.previousElementSibling; if (tituloTerritorio && tituloTerritorio.tagName === "H3") tituloTerritorio.remove();
+          // reset visual: quitar selección y estilos en mapa si corresponde
+          window.todosLosTerritorios.forEach(territorio => {
+            territorio.eachLayer(pol => {
+              if (pol._selected) {
+                pol._selected = false;
+                if (pol._originalStyle) try { pol.setStyle(pol._originalStyle); } catch (e) { }
               }
-              item.remove();
-            }, 500);
-          });
-        });
-
-        // Botón de nota
-        modal.querySelectorAll(".btnNota").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const territorioId = btn.dataset.territorio;
-            const polId = btn.dataset.pol;
-            const index = parseInt(btn.dataset.index, 10);
-            const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-            const reg = registros[polId][index] || "";
-            const partes = reg.split('| Comentario:');
-            const notaActual = partes[1]?.trim() || "";
-
-            const popupNota = document.createElement("div");
-            popupNota.style.cssText = `position: fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:12px; box-shadow:0 5px 20px rgba(0,0,0,0.3); z-index:10000; width:300px; text-align:center;`;
-            popupNota.innerHTML = `
-<h3>Nota</h3>
-<textarea id="inputNota" style="width:90%; height:80px; margin-bottom:10px;">${notaActual}</textarea>
-<div style="display:flex; justify-content:center; gap:10px;">
-  <button id="guardarNota" style="padding:6px 12px; background:#4caf50; color:white; border:none; border-radius:6px; cursor:pointer;">Guardar</button>
-  <button id="eliminarNota" style="padding:6px 12px; background:#e53935; color:white; border:none; border-radius:6px; cursor:pointer;">Eliminar</button>
-</div>
-<button id="cerrarNota" style="position:absolute; top:8px; right:8px; border:none; background:none; cursor:pointer; font-size:18px;">✖</button>
-`;
-            document.body.appendChild(popupNota);
-
-            popupNota.querySelector("#guardarNota").addEventListener("click", () => {
-              const nuevaNota = popupNota.querySelector("#inputNota").value.trim();
-              registros[polId][index] = partes[0].trim() + (nuevaNota ? " | Comentario: " + nuevaNota : "");
-              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-              document.body.removeChild(popupNota);
-              modal.remove(); document.getElementById("btnTerritoriosTerminados").click();
-            });
-
-            popupNota.querySelector("#eliminarNota").addEventListener("click", () => {
-              registros[polId][index] = partes[0].trim();
-              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-              document.body.removeChild(popupNota);
-              modal.remove(); document.getElementById("btnTerritoriosTerminados").click();
-            });
-
-            popupNota.querySelector("#cerrarNota").addEventListener("click", () => {
-              if (document.body.contains(popupNota)) document.body.removeChild(popupNota);
             });
           });
-        });
 
-      }
+          // refrescar filtros (si tienes función global filtrarPorMes)
+          if (typeof filtrarPorMes === "function") filtrarPorMes();
 
-      asignarEventosInline();
-
-      // === Borrar registros del mes ===
-      function borrarRegistrosDelMes() {
-        const btnBasura = document.getElementById("borrarRegistros");
-        btnBasura.style.transform = "translateX(5px)";
-        setTimeout(() => btnBasura.style.transform = "translateX(-5px)", 50);
-        setTimeout(() => btnBasura.style.transform = "translateX(0px)", 100);
-
-        window.todosLosTerritorios.forEach(territorio => {
-          const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
-          Object.keys(registros).forEach(polId => {
-            registros[polId] = registros[polId].filter(reg => {
-              const fecha = reg.split('| Fecha:')[1]?.trim() || '';
-              let mesRegistro = '';
-              if (fecha.includes('-')) mesRegistro = fecha.split('-')[1];
-              else if (fecha.includes('/')) mesRegistro = fecha.split('/')[1];
-              else if (fecha.length >= 5) mesRegistro = fecha.slice(3, 5);
-              return mostrarTodos ? false : mesRegistro !== mes.padStart(2, '0');
-            });
+          // animación y cierre luego de un momento
+          const items = overlay.querySelectorAll('.registroItem');
+          items.forEach(item => {
+            const overlayDiv = document.createElement('div');
+            overlayDiv.style.cssText = "position:absolute;top:0;left:-100%;width:100%;height:100%;background:white;transition:left 0.5s ease;z-index:5;";
+            item.appendChild(overlayDiv); void overlayDiv.offsetHeight;
+            setTimeout(() => overlayDiv.style.left = "0%", 10);
           });
-          localStorage.setItem(territorio._id + "_capitanes", JSON.stringify(registros));
-        });
+          setTimeout(() => {
+            overlay.querySelector("#listaRegistros").innerHTML = `<h3 style="text-align:center;">✅ Registros del mes eliminados</h3>`;
+            // dejar botón cerrar
+            const btnC = overlay.querySelector("#cerrarModalTT");
+            if (btnC) btnC.addEventListener('click', () => overlay.remove());
+          }, 700);
+          return;
+        }
 
-        window.todosLosTerritorios.forEach(territorio => { territorio.eachLayer(pol => { if (pol._selected) { pol._selected = false; pol.setStyle(pol._originalStyle); } }); });
+        // EXPORTAR a Excel
+        if (target.id === 'btnExportarExcelPopup') {
+          try {
+            // recolectar datos visibles (mismo criterio que en cargarRegistrosEnLista)
+            const filas = [];
+            window.todosLosTerritorios.forEach((territorio, tIndex) => {
+              territorio.eachLayer(pol => {
+                if (!pol._selected && !mostrarTodos) return;
+                const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
+                (registros[pol._id] || []).forEach(reg => {
+                  const partes = reg.split('| Fecha:');
+                  const capitan = (partes[0] || "").replace("Capitán:", "").replace("Trabajado por:", "").trim();
+                  const fechaYNota = (partes[1] || "").trim();
+                  const fechaRaw = fechaYNota.split('| Comentario:')[0]?.trim() || "";
+                  const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
+                  if (!fechaRaw) return;
+                  let mesRegistro = '';
+                  if (fechaRaw.includes('-')) mesRegistro = fechaRaw.split('-')[1];
+                  else if (fechaRaw.includes('/')) mesRegistro = fechaRaw.split('/')[1];
+                  else if (fechaRaw.length >= 5) mesRegistro = fechaRaw.slice(3, 5);
+                  if (mostrarTodos || mesRegistro === String(mes).padStart(2, '0')) {
+                    const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
+                    filas.push({
+                      Territorio: `Territorio ${tIndex + 1}`,
+                      Cuadra: cuadraLimpia,
+                      Capitán: capitan,
+                      Fecha: formatearFechaParaMostrar(fechaRaw),
+                      Nota: nota || ""
+                    });
+                  }
+                });
+              });
+            });
 
-        filtrarPorMes();
+            if (filas.length === 0) { alert("No hay registros para exportar."); return; }
 
-        const registrosItems = document.getElementById("contenidoModal").querySelectorAll(".registroItem");
-        registrosItems.forEach(item => {
-          const overlay = document.createElement("div");
-          overlay.style.cssText = "position:absolute;top:0;left:-100%;width:100%;height:100%;background:white;transition:left 0.5s ease;z-index:5;";
-          item.appendChild(overlay); void overlay.offsetHeight;
-          setTimeout(() => overlay.style.left = "0%", 10);
-        });
+            // Construir worksheet y descargar (usa XLSX global)
+            if (typeof XLSX === 'undefined') { alert("No se encontró la librería XLSX. Asegúrate de haber incluido sheetjs."); return; }
 
-        setTimeout(() => {
-          const contenidoModal = document.getElementById("contenidoModal");
-          contenidoModal.innerHTML = `<button id="cerrarModal" style="position:absolute;top:10px;right:10px;font-size:20px;background:none;border:none;cursor:pointer;">✖</button><h2 style="text-align:center;">✅ Registros del mes eliminados</h2>`;
-          document.getElementById("cerrarModal").addEventListener("click", () => { document.body.removeChild(modal); });
-        }, 700);
-      }
+            const ws = XLSX.utils.json_to_sheet(filas);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Registros");
+            const nombreArchivo = `territorios_registros_${mostrarTodos ? 'todos' : mes}.xlsx`;
+            XLSX.writeFile(wb, nombreArchivo);
+          } catch (err) {
+            console.error(err);
+            alert("Error exportando a Excel: " + (err.message || err));
+          }
+          return;
+        }
 
-      document.getElementById("borrarRegistros").addEventListener("click", () => {
-        const confirmar = confirm(mostrarTodos ?
-          "⚠️ Esto borrará TODOS los registros guardados. ¿Seguro que quieres continuar?" :
-          "¿Estás seguro de que quieres borrar los registros de este mes?");
-        if (confirmar) { borrarRegistrosDelMes(); }
-      });
+        // EDITAR inline (botón dentro de cada registro)
+        if (target.classList.contains('btnEditarInline')) {
+          const item = target.closest('.registroItem');
+          if (!item) return;
+          // obtener datos
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          const texto = registros[polId] && registros[polId][index] ? registros[polId][index] : null;
+          if (!texto) return;
 
-    });
+          // extraer partes
+          const partes = texto.split('| Fecha:');
+          const capValor = partes[0].replace("Capitán:", "").replace("Trabajado por:", "").trim();
+          const fechaYNota = (partes[1] || "").trim();
+          const fechaRaw = fechaYNota.split('| Comentario:')[0]?.trim() || "";
+          const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
 
-    //========================================================================================================================================//
+          // reemplazar UI por inputs
+          const divIzq = item.querySelector('div');
+          divIzq.innerHTML = `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input class="inputEditNombre" style="padding:6px;border-radius:6px;border:1px solid #ccc;" value="${capValor}" />
+          <input class="inputEditFecha" type="date" style="padding:6px;border-radius:6px;border:1px solid #ccc;" />
+        </div>
+        <div style="margin-top:6px;"><small>Nota: <span class="nota-edit-display">${nota || ''}</span></small></div>
+      `;
+          // preparar valor del input fecha (si fechaRaw en formato YYYY-xxx-DD intenta convertir a YYYY-MM-DD)
+          let inputFecha = item.querySelector('.inputEditFecha');
+          try {
+            if (fechaRaw.includes('-')) {
+              const p = fechaRaw.split('-');
+              if (p[0].length === 4) { // YYYY-mesCorto-DD o YYYY-MM-DD
+                let mesNum = isNaN(p[1]) ? (["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"].indexOf(p[1].toLowerCase()) + 1) : parseInt(p[1], 10);
+                if (!mesNum) mesNum = 1;
+                inputFecha.value = `${p[0]}-${String(mesNum).padStart(2, '0')}-${String(p[2]).padStart(2, '0')}`;
+              } else { // DD-MM-YYYY
+                inputFecha.value = `${p[2]}-${String(p[1]).padStart(2, '0')}-${String(p[0]).padStart(2, '0')}`;
+              }
+            } else if (fechaRaw.includes("/")) {
+              const p = fechaRaw.split('/');
+              inputFecha.value = `${p[2]}-${String(p[1]).padStart(2, '0')}-${String(p[0]).padStart(2, '0')}`;
+            }
+          } catch (e) { /* noop */ }
+
+          // cambiar botones a guardar/cancelar
+          const btnsDiv = target.closest('div[style]').querySelector('div:last-child') || target.parentElement;
+          btnsDiv.innerHTML = `
+        <button class="btnGuardarEd" style="padding:6px;border-radius:6px;border:none;background:#43a047;color:#fff;cursor:pointer;">💾</button>
+        <button class="btnCancelarEd" style="padding:6px;border-radius:6px;border:none;background:#999;color:#fff;cursor:pointer;">✖</button>
+      `;
+          return;
+        }
+
+        // GUARDAR edición inline
+        if (target.classList.contains('btnGuardarEd')) {
+          const item = target.closest('.registroItem');
+          if (!item) return;
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          const inputNombre = item.querySelector('.inputEditNombre');
+          const inputFecha = item.querySelector('.inputEditFecha');
+          const nuevoNombre = inputNombre ? inputNombre.value.trim() : "";
+          const nuevaFechaISO = inputFecha ? inputFecha.value : "";
+
+          if (!nuevoNombre) { alert("Nombre no puede estar vacío"); return; }
+          // formatear nuevaFechaISO a formato guardado: YYYY-MM-DD -> convertir a YYYY-mesCorto-DD para mantener consistencia
+          function aFormatoGuardado(isoDate) {
+            if (!isoDate) return "";
+            const d = isoDate.split("-");
+            const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+            const mm = parseInt(d[1], 10);
+            return `${d[0]}-${(meses[mm - 1] || d[1])}-${String(d[2]).padStart(2, "0")}`;
+          }
+          const fechaParaGuardar = aFormatoGuardado(nuevaFechaISO);
+          // mantener nota si existe
+          const textoPrev = registros[polId] && registros[polId][index] ? registros[polId][index] : "";
+          const notaPrev = textoPrev.split('| Comentario:')[1]?.trim() || "";
+          registros[polId][index] = `Capitán: ${nuevoNombre} | Fecha: ${fechaParaGuardar}${notaPrev ? " | Comentario: " + notaPrev : ""}`;
+          localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+
+          // actualizar UI: reemplazar inputs por spans
+          const divIzq = item.querySelector('div');
+          divIzq.innerHTML = `<strong>Cuadra</strong> | Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${nuevoNombre}</span><br>
+        Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${formatearFechaParaMostrar(fechaParaGuardar)}</span>`;
+
+          // restaurar botones
+          const btnsDiv = item.querySelector('div').nextElementSibling;
+          btnsDiv.innerHTML = `
+        <button class="btnEditarInline" style="padding:6px;border-radius:6px;border:none;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
+        <button class="btnEliminar" style="padding:6px;border-radius:6px;border:none;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
+        <button class="btnNota" style="padding:6px;border-radius:6px;border:none;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
+      `;
+          // opcional: re-llamar asignarEventosInline si dependes de esa función en otro lado
+          if (typeof asignarEventosInline === "function") asignarEventosInline();
+          return;
+        }
+
+        // CANCELAR edición inline
+        if (target.classList.contains('btnCancelarEd')) {
+          // simplemente recargar la lista (fácil y seguro)
+          cargarRegistrosEnLista();
+          return;
+        }
+
+        // ELIMINAR registro individual
+        if (target.classList.contains('btnEliminar')) {
+          const item = target.closest('.registroItem');
+          if (!item) return;
+          if (!confirm("⚠️ ¿Estás seguro de que quieres eliminar este registro?")) return;
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          if (registros[polId] && registros[polId][index] !== undefined) {
+            registros[polId].splice(index, 1);
+            localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+          }
+          // quitar elemento de UI con animación
+          item.style.transition = "all 0.4s ease"; item.style.transform = "scale(0.85)"; item.style.opacity = "0";
+          setTimeout(() => { item.remove(); }, 420);
+          return;
+        }
+
+        // NOTA (editar/guardar/eliminar nota)
+        if (target.classList.contains('btnNota')) {
+          const item = target.closest('.registroItem');
+          if (!item) return;
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          const texto = registros[polId] && registros[polId][index] ? registros[polId][index] : "";
+          const notaActual = texto.split('| Comentario:')[1]?.trim() || "";
+
+          // crear popup nota simple
+          const popup = document.createElement('div');
+          popup.style.cssText = "position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;padding:16px;border-radius:10px;z-index:10000;box-shadow:0 6px 18px rgba(0,0,0,0.25);width:320px;text-align:center;";
+          popup.innerHTML = `
+        <h3 style="margin:0 0 8px;">Nota</h3>
+        <textarea id="inputNotaModal" style="width:100%;height:90px;padding:8px;border:1px solid #ccc;border-radius:6px;">${notaActual}</textarea>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:10px;">
+          <button id="guardarNotaBtn" style="padding:8px 12px;background:#4caf50;color:#fff;border:none;border-radius:6px;cursor:pointer;">Guardar</button>
+          <button id="eliminarNotaBtn" style="padding:8px 12px;background:#e53935;color:#fff;border:none;border-radius:6px;cursor:pointer;">Eliminar</button>
+          <button id="cerrarNotaBtn" style="padding:8px 12px;background:#999;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cerrar</button>
+        </div>
+      `;
+          document.body.appendChild(popup);
+
+          // handlers (delegación en documento)
+          function limpiarPopupNota() { if (document.body.contains(popup)) { popup.remove(); document.removeEventListener('click', docClickHandler); } }
+          function docClickHandler(ev) {
+            if (ev.target.id === 'guardarNotaBtn') {
+              const nuevo = popup.querySelector('#inputNotaModal').value.trim();
+              const registrosAct = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+              const base = registrosAct[polId] && registrosAct[polId][index] ? registrosAct[polId][index].split('| Comentario:')[0].trim() : registrosAct[polId][index] || "";
+              registrosAct[polId][index] = base + (nuevo ? " | Comentario: " + nuevo : "");
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registrosAct));
+              limpiarPopupNota();
+              // refrescar modal
+              cargarRegistrosEnLista();
+            } else if (ev.target.id === 'eliminarNotaBtn') {
+              const registrosAct = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+              const base = registrosAct[polId] && registrosAct[polId][index] ? registrosAct[polId][index].split('| Comentario:')[0].trim() : registrosAct[polId][index] || "";
+              registrosAct[polId][index] = base;
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registrosAct));
+              limpiarPopupNota();
+              cargarRegistrosEnLista();
+            } else if (ev.target.id === 'cerrarNotaBtn') {
+              limpiarPopupNota();
+            }
+          }
+          document.addEventListener('click', docClickHandler);
+          return;
+        }
+
+      }); // fin delegación overlay
+
+    }); // fin btnTerritoriosTerminados listener
 
 
 
