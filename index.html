@@ -1236,6 +1236,17 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
     // =========================================================================================================================================
     // === Botón Territorios Terminados con notas integradas (bloque corregido, listo para reemplazar) ===
     // =========================================================================================================================================
@@ -1329,11 +1340,12 @@
                 const fechaForm = formatearFechaParaMostrar(fechaRaw);
                 bloqueTerr += `
               <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${regIndex}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;position:relative;display:flex;justify-content:space-between;gap:8px;align-items:center;">
-                <div style="min-width:220px;">
-                  <strong>Cuadra ${cuadraLimpia}</strong> | Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span><br>
-                  Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaForm}</span>
-                  ${nota ? `<div style="margin-top:6px;color:#333;"><small>Nota: ${nota}</small></div>` : ""}
-                </div>
+               <div style="min-width:220px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+  <strong>Cuadra ${cuadraLimpia}</strong>
+  <span>| Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span></span>
+  <span>Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaForm}</span></span>
+  ${nota ? `<div style="margin-top:6px;color:#333;"><small>Nota: ${nota}</small></div>` : ""}
+</div>
                 <div style="display:flex;gap:6px;flex-shrink:0;">
                   <button class="btnEditarInline" style="padding:6px;border-radius:6px;border:none;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
                   <button class="btnEliminar" style="padding:6px;border-radius:6px;border:none;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
@@ -2759,27 +2771,143 @@
     // ===============================
 
     document.getElementById("registrarTerritorioBtn").addEventListener("click", () => {
-      // Crear modal
       const modal = document.createElement('div');
-      modal.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999";
-      modal.innerHTML = `
-    <div style="background:#fff;padding:20px;border-radius:10px;width:90%;max-width:500px;position:relative;">
-      <button id="cerrarModalTerritorio" style="position:absolute;top:10px;right:10px;border:none;background:none;font-size:20px;cursor:pointer;">✖</button>
-      <h3>Registrar Territorio</h3>
-      <label>Nombre Capitán: <input type="text" id="capitanTerritorio" style="width:90%; padding:6px; margin-bottom:10px;"/></label>
-      <label>Fecha: <input type="date" id="fechaTerritorio" style="width:90%; padding:6px; margin-bottom:10px;"/></label>
-      <label>Territorio: 
-        <select id="selectTerritorio"></select>
-      </label>
-      <div id="cuadrasCheckbox" style="margin-top:10px;"></div>
-      <label>Comentario (opcional): <input type="text" id="comentarioTerritorio" style="width:90%; padding:6px; margin-bottom:10px;"/></label>
-      <button id="guardarTerritorio" style="margin-top:15px;padding:10px 15px;background:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;">Guardar</button>
-    </div>
+      modal.style.cssText = `
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:rgba(0,0,0,0.5);
+    display:flex;align-items:center;justify-content:center;
+    z-index:9999;font-family:Arial, sans-serif;
+    animation:fadeInBg 0.3s ease forwards;
   `;
+
+      modal.innerHTML = `
+    <div id="modalContenido" style="
+      background:#f9fafb;
+      border-radius:16px;
+      width:90%;max-width:480px;
+      padding:24px;
+      box-shadow:0 4px 20px rgba(0,0,0,0.25);
+      position:relative;
+      animation:fadeIn 0.25s ease-in-out;
+    ">
+      <button id="cerrarModalTerritorio" style="
+        position:absolute;top:12px;right:12px;
+        border:none;background:none;
+        font-size:22px;cursor:pointer;color:#888;
+        transition:color 0.2s;
+      ">✖</button>
+
+      <h2 style="
+        text-align:center;
+        margin-bottom:18px;
+        color:#111827;
+      ">Registrar Territorio</h2>
+
+      <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
+        Nombre Capitán
+        <input type="text" id="capitanTerritorio" style="
+          width:100%;
+          padding:10px;
+          border:1px solid #d1d5db;
+          border-radius:8px;
+          margin-top:4px;
+          font-size:15px;
+        "/>
+      </label>
+
+      <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
+        Fecha
+        <input type="date" id="fechaTerritorio" style="
+          width:100%;
+          padding:10px;
+          border:1px solid #d1d5db;
+          border-radius:8px;
+          margin-top:4px;
+          font-size:15px;
+        "/>
+      </label>
+
+      <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
+        Territorio
+        <select id="selectTerritorio" style="
+          width:100%;
+          padding:10px;
+          border:1px solid #d1d5db;
+          border-radius:8px;
+          margin-top:4px;
+          font-size:15px;
+        "></select>
+      </label>
+
+      <div id="cuadrasCheckbox" style="
+        margin-top:10px;
+        max-height:140px;
+        overflow-y:auto;
+        border:1px solid #e5e7eb;
+        border-radius:8px;
+        padding:10px;
+        background:#fff;
+      "></div>
+
+      <label style="display:block;margin-top:12px;color:#374151;font-weight:600;">
+        Comentario (opcional)
+        <input type="text" id="comentarioTerritorio" style="
+          width:100%;
+          padding:10px;
+          border:1px solid #d1d5db;
+          border-radius:8px;
+          margin-top:4px;
+          font-size:15px;
+        "/>
+      </label>
+
+      <button id="guardarTerritorio" style="
+        margin-top:18px;
+        width:100%;
+        padding:12px;
+        background:#16a34a;
+        color:white;
+        font-size:16px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        font-weight:600;
+        transition:background 0.2s;
+      ">Guardar</button>
+    </div>
+
+    <style>
+      @keyframes fadeIn {
+        from {opacity:0; transform:scale(0.95);}
+        to {opacity:1; transform:scale(1);}
+      }
+      @keyframes fadeOut {
+        from {opacity:1; transform:scale(1);}
+        to {opacity:0; transform:scale(0.95);}
+      }
+      @keyframes fadeInBg {
+        from {opacity:0;}
+        to {opacity:1;}
+      }
+      @keyframes fadeOutBg {
+        from {opacity:1;}
+        to {opacity:0;}
+      }
+      #guardarTerritorio:hover { background:#15803d; }
+      #cerrarModalTerritorio:hover { color:#111; }
+    </style>
+  `;
+
       document.body.appendChild(modal);
 
-      // Cerrar modal
-      document.getElementById('cerrarModalTerritorio').addEventListener('click', () => document.body.removeChild(modal));
+      const cerrarModal = () => {
+        const contenido = modal.querySelector("#modalContenido");
+        contenido.style.animation = "fadeOut 0.2s forwards";
+        modal.style.animation = "fadeOutBg 0.25s forwards";
+        setTimeout(() => document.body.removeChild(modal), 220);
+      };
+
+      document.getElementById('cerrarModalTerritorio').addEventListener('click', cerrarModal);
 
       // Llenar select con territorios
       const selectTerr = document.getElementById('selectTerritorio');
@@ -2792,16 +2920,16 @@
 
       const cuadrasDiv = document.getElementById('cuadrasCheckbox');
 
-      // Función para cargar cuadras del territorio seleccionado
       function cargarCuadras() {
         const territorio = window.todosLosTerritorios[selectTerr.value];
         let html = "";
         territorio.eachLayer(pol => {
           const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
-          html += `<label style="display:block;margin:5px;">
-               <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}">
-               Cuadra ${cuadraLimpia}
-             </label>`;
+          html += `
+        <label style="display:block;margin:6px 0;color:#374151;">
+          <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" style="margin-right:6px;">
+          Cuadra ${cuadraLimpia}
+        </label>`;
         });
         cuadrasDiv.innerHTML = html;
       }
@@ -2809,14 +2937,13 @@
       selectTerr.addEventListener('change', cargarCuadras);
       cargarCuadras();
 
-      // Guardar registros
       document.getElementById('guardarTerritorio').addEventListener('click', () => {
         const territorio = window.todosLosTerritorios[selectTerr.value];
-        const capitanInput = document.getElementById('capitanTerritorio');
-        const capitan = capitanInput.value.trim().replace(/^Cuadra\s*\d+\s*\|\s*/i, ""); // limpia si por error copió "Cuadra X |"
+        const capitan = document.getElementById('capitanTerritorio').value.trim().replace(/^Cuadra\s*\d+\s*\|\s*/i, "");
         const fecha = document.getElementById('fechaTerritorio').value;
         const comentario = document.getElementById('comentarioTerritorio').value.trim();
         if (!capitan || !fecha) return alert("Ingresa nombre y fecha");
+
         const checkboxes = cuadrasDiv.querySelectorAll('input[type=checkbox]:checked');
         if (checkboxes.length === 0) return alert("Selecciona al menos una cuadra");
 
@@ -2824,21 +2951,19 @@
 
         checkboxes.forEach(cb => {
           const polId = cb.value;
-          const cuadraNum = cb.dataset.cuadra; // limpio desde data-cuadra
+          const cuadraNum = cb.dataset.cuadra;
           if (!registros[polId]) registros[polId] = [];
-
           const registroTexto = `Trabajado por: ${capitan} | Fecha: ${fecha}${comentario ? " | " + comentario : ""}`;
           registros[polId].push(registroTexto);
-
-
           territorio.eachLayer(pol => { if (pol._id === polId) pol._selected = true; });
         });
 
         localStorage.setItem(`${territorio._id}_capitanes`, JSON.stringify(registros));
         alert("Registros guardados ✅");
-        document.body.removeChild(modal);
+        cerrarModal();
       });
     });
+
 
 
 
