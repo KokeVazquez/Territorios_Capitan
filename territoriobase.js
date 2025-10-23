@@ -85,6 +85,13 @@ function ocultarMenu() {
   if (menu) menu.style.display = "none";
 }
 
+
+
+
+
+
+
+
 // =============================
 // === Notas ===
 // =============================
@@ -93,21 +100,22 @@ function anadirNotaPopup(id, territorioId) {
   ocultarMenu();
   var notasPoligonos = JSON.parse(localStorage.getItem(territorioId + "_notas") || "{}");
 
+  // Crear fondo modal
   const modalFondo = document.createElement("div");
   modalFondo.id = "modalAñadirNota";
   modalFondo.style.position = "fixed";
   modalFondo.style.top = "0";
   modalFondo.style.left = "0";
-  modalFondo.style.width = "100vw";
-  modalFondo.style.height = "100vh";
+  modalFondo.style.width = "100%";
+  modalFondo.style.height = "100%";
   modalFondo.style.background = "rgba(0,0,0,0.5)";
   modalFondo.style.display = "flex";
   modalFondo.style.alignItems = "center";
   modalFondo.style.justifyContent = "center";
-  modalFondo.style.zIndex = "99999";
+  modalFondo.style.zIndex = "99999"; // sobre todo
   modalFondo.style.backdropFilter = "blur(4px)";
-  modalFondo.style.webkitOverflowScrolling = "touch";
 
+  // Contenido del popup
   modalFondo.innerHTML = `
     <div style="
       background: rgba(24,23,23,0.07);
@@ -136,64 +144,58 @@ function anadirNotaPopup(id, territorioId) {
         margin-bottom: 10px;
         resize: none;
       "></textarea><br>
-      <button id="guardarNota" style="
-        background: rgba(255,255,255,0.15);
-        border: 1px solid rgba(255,255,255,0.3);
-        border-radius: 50px;
-        color: #fff;
-        font-weight: 600;
-        padding: 8px 15px;
-        margin-right: 5px;
-        cursor: pointer;
-        transition: all 0.25s ease;
-      ">💾 Guardar</button>
-      <button id="cancelarNota" style="
-        background: rgba(255,0,0,0.2);
-        border: 1px solid rgba(255,0,0,0.3);
-        border-radius: 50px;
-        color: #fff;
-        font-weight: 600;
-        padding: 8px 15px;
-        cursor: pointer;
-        transition: all 0.25s ease;
-      ">❌ Cancelar</button>
+      <div style="display:flex; gap:8px;">
+        <button id="guardarNota" style="
+          flex:1;
+          background: rgba(76, 175, 80, 0.25);
+          border: 1px solid rgba(255,255,255,0.3);
+          border-radius: 50px;
+          color: white;
+          font-weight: 600;
+          padding: 8px 15px;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        ">💾 Guardar</button>
+        <button id="cancelarNota" style="
+          flex:1;
+          background: rgba(244, 67, 54, 0.25);
+          border: 1px solid rgba(255,255,255,0.3);
+          border-radius: 50px;
+          color: white;
+          font-weight: 600;
+          padding: 8px 15px;
+          cursor: pointer;
+          transition: all 0.25s ease;
+        ">❌ Cancelar</button>
+      </div>
     </div>
   `;
 
+  // Agregar al body
   document.body.appendChild(modalFondo);
 
-  const cerrarModal = () => document.body.removeChild(modalFondo);
+  // Función para cerrar
+  document.getElementById("cancelarNota").onclick = () => {
+    document.body.removeChild(modalFondo);
+  };
 
-  // Soporte click y touch
-  document.getElementById("cancelarNota").addEventListener("click", cerrarModal);
-  document.getElementById("cancelarNota").addEventListener("touchstart", cerrarModal);
-
-  const guardarBtn = document.getElementById("guardarNota");
-  guardarBtn.addEventListener("click", () => {
-    // aquí tu lógica de guardar
-    cerrarModal();
-  });
-  guardarBtn.addEventListener("touchstart", () => {
-    // aquí tu lógica de guardar
-    cerrarModal();
-  });
-
-
-
-
-
-
-  L.popup().setLatLng(map.getCenter()).setContent(contenido).openOn(map);
-
-  contenido.querySelector("#guardarNota").onclick = function () {
-    var texto = contenido.querySelector("#inputNota").value.trim();
+  // Función para guardar
+  document.getElementById("guardarNota").onclick = () => {
+    const texto = document.getElementById("inputNota").value.trim();
     if (!texto) return;
     if (!notasPoligonos[id]) notasPoligonos[id] = [];
     notasPoligonos[id].push(texto);
     localStorage.setItem(territorioId + "_notas", JSON.stringify(notasPoligonos));
-    map.closePopup();
+    document.body.removeChild(modalFondo);
   };
 }
+
+
+
+
+
+
+
 
 function verNotas(id, territorioId) {
   ocultarMenu();
