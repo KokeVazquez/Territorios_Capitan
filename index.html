@@ -1277,6 +1277,43 @@
       }
 
       modalContent.innerHTML = "<h2>Todas las Notas Registradas</h2><hr>";
+      // Botón para eliminar todas las notas
+      const btnEliminarTodas = document.createElement("button");
+      btnEliminarTodas.textContent = "Eliminar Todas las Notas";
+      btnEliminarTodas.style.backgroundColor = "#f44336";
+      btnEliminarTodas.style.color = "#fff";
+      btnEliminarTodas.style.border = "none";
+      btnEliminarTodas.style.padding = "8px 12px";
+      btnEliminarTodas.style.borderRadius = "5px";
+      btnEliminarTodas.style.cursor = "pointer";
+      btnEliminarTodas.style.marginBottom = "10px";
+
+      btnEliminarTodas.addEventListener("click", () => {
+        mostrarPopup(`
+    <h3>Confirmar Eliminación</h3>
+    <p>¿Seguro que quieres eliminar <b>todas</b> las notas?</p>
+    <button id="confirmarEliminarTodasBtn" style="background-color:#f44336;color:#fff;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">Sí</button>
+    <button id="cancelarEliminarTodasBtn" style="background-color:#ccc;color:#000;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;">No</button>
+  `);
+
+        document.getElementById("confirmarEliminarTodasBtn").addEventListener("click", () => {
+          // Vaciar todas las notas de todos los territorios
+          window.todosLosTerritorios.forEach(territorio => {
+            localStorage.removeItem(territorio._id + "_notas");
+          });
+          modalContent.innerHTML = "<h2>Todas las Notas Registradas</h2><hr><p>No hay notas registradas.</p>";
+          cerrarPopup();
+        });
+
+        document.getElementById("cancelarEliminarTodasBtn").addEventListener("click", cerrarPopup);
+      });
+
+      modalContent.appendChild(btnEliminarTodas);
+
+      // Luego sigue el resto de tu código que recorre todasLasNotas y crea cada nota individual
+      todasLasNotas.forEach(n => {
+        // tu código existente para crear notaDiv, botones editar/eliminar...
+      });
 
       todasLasNotas.forEach(n => {
         const notaDiv = document.createElement("div");
@@ -2869,11 +2906,12 @@
       const btnUbicacionMenu = document.getElementById('btnUbicacion');
 
       // Toggle del menú
-      hamburgerBtn.addEventListener('click', () => {
+      hamburgerBtn.addEventListener('click', (e) => {
         menuPanel.classList.toggle('show');
+        e.stopPropagation(); // evita que el click se propague y cierre el menú inmediatamente
       });
 
-      // Función para cerrar el menú si está abierto
+      // Función para cerrar el menú
       function cerrarMenu() {
         if (menuPanel.classList.contains('show')) {
           menuPanel.classList.remove('show');
@@ -2881,21 +2919,34 @@
       }
 
       // Conectar botones a funciones y cerrar menú
-      backupBtnMenu.addEventListener('click', () => {
+      backupBtnMenu.addEventListener('click', (e) => {
         cerrarMenu();
         hacerCopiaSeguridad();
+        e.stopPropagation();
       });
 
-      restoreBtnMenu.addEventListener('click', () => {
+      restoreBtnMenu.addEventListener('click', (e) => {
         cerrarMenu();
         restaurarCopia();
+        e.stopPropagation();
       });
 
-      btnUbicacionMenu.addEventListener('click', () => {
+      btnUbicacionMenu.addEventListener('click', (e) => {
         cerrarMenu();
         activarUbicacion();
+        e.stopPropagation();
+      });
+
+      // Cerrar menú si se hace click en cualquier otra parte de la página
+      document.addEventListener('click', (e) => {
+        // Solo cerrar si el click no fue dentro del menú ni en el botón hamburguesa
+        if (!menuPanel.contains(e.target) && e.target !== hamburgerBtn) {
+          cerrarMenu();
+        }
       });
     });
+
+
 
 
 
