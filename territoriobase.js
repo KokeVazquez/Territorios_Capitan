@@ -93,13 +93,88 @@ function anadirNotaPopup(id, territorioId) {
   ocultarMenu();
   var notasPoligonos = JSON.parse(localStorage.getItem(territorioId + "_notas") || "{}");
 
-  var contenido = document.createElement("div");
-  contenido.innerHTML = `
-    <b>Añadir nota:</b><br>
-    <textarea id="inputNota" rows="4" cols="30" placeholder="Escribe tu nota aquí..."></textarea><br>
-    <button id="guardarNota">💾 Guardar</button>
-    <button onclick="map.closePopup()">❌ Cancelar</button>
+  // Crear fondo modal
+  const modalFondo = document.createElement("div");
+  modalFondo.id = "modalAñadirNota";
+  modalFondo.style.position = "fixed";
+  modalFondo.style.top = "0";
+  modalFondo.style.left = "0";
+  modalFondo.style.width = "100%";
+  modalFondo.style.height = "100%";
+  modalFondo.style.background = "rgba(0,0,0,0.5)";
+  modalFondo.style.display = "flex";
+  modalFondo.style.alignItems = "center";
+  modalFondo.style.justifyContent = "center";
+  modalFondo.style.zIndex = "99999"; // sobre todo
+  modalFondo.style.backdropFilter = "blur(4px)";
+
+  // Contenido del popup
+  modalFondo.innerHTML = `
+    <div style="
+      background: rgba(24,23,23,0.07);
+      backdrop-filter: blur(6px) saturate(180%);
+      -webkit-backdrop-filter: blur(6px) saturate(180%);
+      border-radius: 20px;
+      padding: 20px;
+      color: white;
+      font-family: 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-weight: 500;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      min-width: 300px;
+      max-width: 90%;
+    ">
+      <b>Añadir nota:</b><br>
+      <textarea id="inputNota" rows="4" cols="30" placeholder='Escribe tu nota aquí...' style="
+        width: 100%;
+        padding: 8px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.1);
+        color: white;
+        font-family: inherit;
+        font-size: 14px;
+        margin-top: 5px;
+        margin-bottom: 10px;
+        resize: none;
+      "></textarea><br>
+      <button id="guardarNota" style="
+        background: rgba(255,255,255,0.15);
+        border: 1px solid rgba(255,255,255,0.3);
+        border-radius: 50px;
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 15px;
+        margin-right: 5px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+      ">💾 Guardar</button>
+      <button id="cancelarNota" style="
+        background: rgba(255,0,0,0.2);
+        border: 1px solid rgba(255,0,0,0.3);
+        border-radius: 50px;
+        color: #fff;
+        font-weight: 600;
+        padding: 8px 15px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+      ">❌ Cancelar</button>
+    </div>
   `;
+
+  // Agregar al body
+  document.body.appendChild(modalFondo);
+
+  // Función para cerrar
+  document.getElementById("cancelarNota").onclick = () => {
+    document.body.removeChild(modalFondo);
+  };
+  document.getElementById("guardarNota").onclick = () => {
+    // Aquí tu lógica de guardar
+    document.body.removeChild(modalFondo);
+  };
+
+
+
 
   L.popup().setLatLng(map.getCenter()).setContent(contenido).openOn(map);
 
