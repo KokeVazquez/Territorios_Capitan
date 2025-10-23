@@ -91,8 +91,6 @@
   #btnAreaGrande,
   #btnMostrarTodasNotas,
   #btnTerritoriosTerminados,
-  #backupBtn,
-  #restoreBtn,
   #registrarTerritorioBtn {
     font-weight: bold;
     border: 0px solid #000;
@@ -128,8 +126,6 @@
   #btnAreaGrande,
   #btnMostrarTodasNotas,
   #btnTerritoriosTerminados,
-  #backupBtn,
-  #restoreBtn,
   #registrarTerritorioBtn {
     padding: 2vh 0.5vw;
   }
@@ -140,8 +136,6 @@
   #btnAreaGrande:hover,
   #btnMostrarTodasNotas:hover,
   #btnTerritoriosTerminados:hover,
-  #backupBtn:hover,
-  #restoreBtn:hover,
   #registrarTerritorioBtn:hover {
     background-color: #ffffff;
     color: #1f1e1e;
@@ -154,8 +148,6 @@
   #btnAreaGrande:active,
   #btnMostrarTodasNotas:active,
   #btnTerritoriosTerminados:active,
-  #backupBtn:active,
-  #restoreBtn:active,
   #registrarTerritorioBtn:active {
     transform: scale(0.97);
     background-color: #222;
@@ -2603,15 +2595,11 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const backupBtn = document.getElementById('backupBtn');
-      const restoreBtn = document.getElementById('restoreBtn');
-      const restoreFile = document.getElementById('restoreFile');
 
       // ====================
       // COPIA DE SEGURIDAD
       // ====================
-      backupBtn.addEventListener('click', () => {
-        // Popup para pedir nombre y fecha
+      function hacerCopiaSeguridad() {
         const popup = document.createElement('div');
         popup.style.position = 'fixed';
         popup.style.top = '50%';
@@ -2631,23 +2619,17 @@
     `;
         document.body.appendChild(popup);
 
-        // Cancelar
         document.getElementById('cancelBackup').addEventListener('click', () => {
           document.body.removeChild(popup);
         });
 
-        // Confirmar
         document.getElementById('confirmBackup').addEventListener('click', () => {
           const nombre = document.getElementById('backupName').value.trim() || 'Copia';
           const fechaInput = document.getElementById('backupDate').value;
           let fecha = new Date();
-          if (fechaInput) {
-            fecha = new Date(fechaInput);
-          }
+          if (fechaInput) fecha = new Date(fechaInput);
 
           const nombreArchivo = `${nombre} ${fecha.getDate()}-${fecha.getMonth() + 1}-${fecha.getFullYear()}.json`;
-
-          // Convertir localStorage a JSON y descargar
           const data = JSON.stringify(localStorage, null, 2);
           const blob = new Blob([data], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
@@ -2659,10 +2641,9 @@
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-
           document.body.removeChild(popup);
 
-          // Popup bonito post-descarga
+          // Popup post-descarga
           const popup2 = document.createElement('div');
           popup2.style.position = 'fixed';
           popup2.style.top = '50%';
@@ -2675,68 +2656,110 @@
           popup2.style.zIndex = 9999;
           popup2.innerHTML = `
         <p>Copia de seguridad "${nombreArchivo}" descargada ✅</p>
-        <button id="cerrarPopup2" style="padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">
-          Cerrar
-        </button>
+        <button id="cerrarPopup2" style="padding:10px 15px; background:#ccc; color:#000; border:none; border-radius:5px; cursor:pointer;">Cerrar</button>
       `;
           document.body.appendChild(popup2);
-
-          document.getElementById('cerrarPopup2').addEventListener('click', () => {
-            document.body.removeChild(popup2);
-          });
+          document.getElementById('cerrarPopup2').addEventListener('click', () => document.body.removeChild(popup2));
         });
-      });
+      }
 
       // ====================
       // RESTAURAR COPIA
       // ====================
-      restoreBtn.addEventListener('click', () => {
-        restoreFile.click();
-      });
+      function restaurarCopia() {
+        const restoreFile = document.createElement('input');
+        restoreFile.type = 'file';
+        restoreFile.accept = '.json';
+        restoreFile.style.display = 'none';
+        document.body.appendChild(restoreFile);
 
-      restoreFile.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        restoreFile.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function (event) {
-          try {
-            const data = JSON.parse(event.target.result);
-            localStorage.clear();
-            for (const key in data) {
-              localStorage.setItem(key, data[key]);
+          const reader = new FileReader();
+          reader.onload = function (event) {
+            try {
+              const data = JSON.parse(event.target.result);
+              localStorage.clear();
+              for (const key in data) localStorage.setItem(key, data[key]);
+              alert('Copia de seguridad restaurada ✅');
+              location.reload();
+            } catch (err) {
+              alert('Error al restaurar el archivo. Asegúrate de que sea la copia correcta.');
             }
-            alert('Copia de seguridad restaurada ✅');
-            location.reload();
-          } catch (err) {
-            alert('Error al restaurar el archivo. Asegúrate de que sea la copia correcta.');
+          };
+          reader.readAsText(file);
+        });
+
+        restoreFile.click();
+        document.body.removeChild(restoreFile);
+      }
+
+      // ====================
+      // BOTÓN UBICACIÓN
+      // ====================
+      let marcadorUbicacion = null;
+      let seguimientoActivo = false;
+      let watchId = null;
+
+      function activarUbicacion() {
+        const btnAreaGrande = document.getElementById("btnAreaGrande");
+
+        if (!navigator.geolocation) {
+          alert("Tu navegador no soporta geolocalización. Bienvenido al pasado.");
+          return;
+        }
+
+        if (seguimientoActivo) {
+          navigator.geolocation.clearWatch(watchId);
+          seguimientoActivo = false;
+          if (marcadorUbicacion) {
+            map.removeLayer(marcadorUbicacion);
+            marcadorUbicacion = null;
           }
-        };
-        reader.readAsText(file);
+          if (btnAreaGrande) btnAreaGrande.click();
+          return;
+        }
+
+        seguimientoActivo = true;
+
+        watchId = navigator.geolocation.watchPosition(
+          function (pos) {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            if (marcadorUbicacion) marcadorUbicacion.setLatLng([lat, lon]);
+            else marcadorUbicacion = L.marker([lat, lon]).addTo(map).openPopup();
+            map.setView([lat, lon], 17);
+          },
+          function (err) {
+            alert("Error al obtener ubicación: " + err.message);
+            seguimientoActivo = false;
+          },
+          { enableHighAccuracy: true }
+        );
+      }
+
+      // ====================
+      // MENU HAMBURGUESA
+      // ====================
+      const hamburgerBtn = document.getElementById('hamburger-btn');
+      const menuPanel = document.getElementById('menu-panel');
+      const backupBtnMenu = document.getElementById('btnCopiaSeguridad');
+      const restoreBtnMenu = document.getElementById('btnRestaurar');
+      const btnUbicacionMenu = document.getElementById('btnUbicacion');
+
+      // Toggle del menú
+      hamburgerBtn.addEventListener('click', () => {
+        menuPanel.classList.toggle('show');
       });
 
+      // Conectar botones a funciones
+      backupBtnMenu.addEventListener('click', hacerCopiaSeguridad);
+      restoreBtnMenu.addEventListener('click', restaurarCopia);
+      btnUbicacionMenu.addEventListener('click', activarUbicacion);
+
     });
-
-    // ====================
-    // MENU HAMBURGUESA
-    // ====================
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const menuPanel = document.getElementById('menu-panel');
-    const backupBtnMenu = document.getElementById('btnCopiaSeguridad');
-    const restoreBtnMenu = document.getElementById('btnRestaurar');
-    const btnUbicacionMenu = document.getElementById('btnUbicacion');
-
-    // Toggle del menú
-    hamburgerBtn.addEventListener('click', () => {
-      menuPanel.classList.toggle('show');
-    });
-
-    // Reapuntar botones del menú a las funciones existentes
-    backupBtnMenu.addEventListener('click', () => backupBtn.click());
-    restoreBtnMenu.addEventListener('click', () => restoreBtn.click());
-    btnUbicacionMenu.addEventListener('click', () => document.getElementById('btnUbicacion').click());
-
-
 
 
 
