@@ -397,7 +397,7 @@
   }
 
   .menu-contextual {
-    background: rgba(207, 205, 205, 0.15);
+    background: rgba(0, 0, 0, 0.062);
     /* efecto vidrio */
     backdrop-filter: blur(5px) saturate(150%);
     -webkit-backdrop-filter: blur(5px) saturate(150%);
@@ -411,19 +411,46 @@
   }
 
   .menu-contextual button {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
+    /* más transparente para efecto vidrio */
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
+    border-radius: 50px;
     padding: 6px 12px;
     font-size: 14px;
     cursor: pointer;
     display: block;
     margin: 5px 0;
     width: 100%;
-    color: black;
-    /* letras visibles */
+    color: #fff;
+    /* letras blancas visibles sobre el fondo oscuro */
+    font-family: "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    backdrop-filter: blur(6px) saturate(180%);
+    -webkit-backdrop-filter: blur(6px) saturate(180%);
+    box-shadow:
+      inset 0 1px 2px rgba(255, 255, 255, 0.6),
+      0 4px 10px rgba(0, 0, 0, 0.25),
+      0 0 20px rgba(255, 255, 255, 0.03);
     transition: all 0.25s ease;
   }
+
+  .menu-contextual button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.8),
+      0 6px 15px rgba(0, 0, 0, 0.35),
+      0 0 25px rgba(255, 255, 255, 0.1);
+  }
+
+  .menu-contextual button:active {
+    transform: scale(0.96);
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow:
+      inset 0 2px 3px rgba(255, 255, 255, 0.9),
+      0 3px 8px rgba(0, 0, 0, 0.4);
+  }
+
 
   .etiquetaTerritorio {
     background: none;
