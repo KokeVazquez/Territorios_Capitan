@@ -76,10 +76,8 @@ function mostrarMenu(e, pol, notasPoligonos, territorioId) {
     <button onclick="window.open('${pol._link}', '_blank'); ocultarMenu();">📍 Ubicación</button>
     <button onclick="anadirNotaPopup('${pol._id}', '${territorioId}');">➕ Añadir nota</button>
     <button onclick="verNotas('${pol._id}', '${territorioId}');">📒 Notas</button>
+    <button onclick="mostrarCapitanes('${territorioId}');">🧭 Capitanes</button>
   `;
-
-  //<button onclick="mostrarCapitanes('${territorioId}');">🧭 Capitanes</button>
-
 }
 
 function ocultarMenu() {
@@ -152,10 +150,81 @@ function eliminarNota(id, index, territorioId) {
   map.closePopup();
 }
 
+// =============================
+// === Capitanes (Trabajado) ===
+// =============================
 
+function abrirPopupTrabajado(id, notasPoligonos, territorioId) {
+  ocultarMenu();
 
+  var contenido = document.createElement("div");
+  contenido.innerHTML = `
+    <b>Registrar Capitán:</b><br>
+    Nombre: <input type="text" id="nombreTrabajado" placeholder="Nombre"><br>
+    Fecha: <input type="date" id="fechaTrabajado" value="${new Date().toISOString().slice(0, 10)}"><br>
+    <button id="guardarTrabajado">💾 Guardar</button>
+    <button onclick="map.closePopup()">❌ Cancelar</button>
+  `;
 
+  L.popup().setLatLng(map.getCenter()).setContent(contenido).openOn(map);
 
+  contenido.querySelector("#guardarTrabajado").onclick = function () {
+    var nombre = contenido.querySelector("#nombreTrabajado").value.trim();
+    var fecha = contenido.querySelector("#fechaTrabajado").value;
+    if (!nombre || !fecha) return;
+
+    var capitanes = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+    capitanes[id] = [`Trabajado por: ${nombre} | Fecha: ${fecha}`];
+    localStorage.setItem(territorioId + "_capitanes", JSON.stringify(capitanes));
+
+    map.closePopup();
+  };
+}
+
+function mostrarCapitanes(territorioId) {
+  ocultarMenu();
+  var capitanes = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+  var contenido = `<b>${territorioId}:</b><br><br>`;
+
+  Object.keys(capitanes).forEach(polId => {
+    capitanes[polId].forEach(nota => {
+      var partes = nota.replace("Trabajado por: ", "").split("| Fecha:");
+      var nombre = partes[0].trim();
+      var fecha = partes[1].trim();
+      var fechaObj = new Date(fecha);
+      var fechaFormateada =
+        ("0" + fechaObj.getDate()).slice(-2) + "/" +
+        ("0" + (fechaObj.getMonth() + 1)).slice(-2) + "/" +
+        fechaObj.getFullYear();
+
+      contenido += `<b>${polId}</b> - <span style="color:red;">${nombre}</span> - <b>Fecha:</b> <span style="color:red;">${fechaFormateada}</span> 
+                    <button onclick="confirmarEliminarCapitan('${polId}', '${territorioId}')">❌</button><br><br>`;
+    });
+  });
+
+  if (contenido === `<b>${territorioId}:</b><br><br>`)
+    contenido += "No hay registros de capitanes aún.";
+
+  L.popup().setLatLng(map.getCenter()).setContent(contenido).openOn(map);
+}
+
+function confirmarEliminarCapitan(polId, territorioId) {
+  L.popup().setLatLng(map.getCenter()).setContent(`
+    <b>¿Eliminar este registro de Capitán?</b><br>
+    <button onclick="eliminarCapitan('${polId}', '${territorioId}')">✅ Sí</button>
+    <button onclick="mostrarCapitanes('${territorioId}')">❌ No</button>
+  `).openOn(map);
+}
+
+function eliminarCapitan(polId, territorioId) {
+  var capitanes = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+  if (!capitanes[polId]) return;
+
+  delete capitanes[polId];
+  localStorage.setItem(territorioId + "_capitanes", JSON.stringify(capitanes));
+
+  mostrarCapitanes(territorioId);
+}
 
 // =============================
 // === Eventos del territorio activo ===
@@ -189,7 +258,6 @@ function registrarEventosTerritorioActivo(territorio, notasPoligonos, territorio
     });
   });
 }
-
 
 
 
