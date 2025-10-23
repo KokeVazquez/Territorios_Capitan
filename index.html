@@ -545,6 +545,96 @@
       padding: 8px;
     }
   }
+
+
+
+
+
+
+
+  .hamburger-menu {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 9999;
+  }
+
+  .hamburger-icon {
+    font-size: 24px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .hamburger-icon:hover {
+    background: #555;
+  }
+
+  .menu-panel {
+    position: fixed;
+    bottom: 80px;
+    left: 20px;
+    background: rgba(40, 40, 40, 0.95);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transform: translateX(-150%);
+    transition: transform 0.3s ease;
+  }
+
+  .menu-panel button {
+    background: #444;
+    color: #fff;
+    border: none;
+    padding: 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+  }
+
+  .menu-panel button:hover {
+    background: #666;
+  }
+
+  .menu-panel.show {
+    transform: translateX(0);
+  }
+
+
+
+
+
+
+
+  /* ==============================================================================================================================
+    // === PARA QUE NO SE SELECCIONE TEXTO EN SAFARI ===
+    // ==============================================================================================================================
+
+
+  /* Evita selección de texto o el cuadro azul en Safari */
+  * {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    /* bloquea el menú contextual azul de iOS */
+  }
+
+  /* Pero permite seleccionar texto solo donde sí lo necesitas, por ejemplo dentro de inputs o textareas */
+  input,
+  textarea {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
 </style>
 
 
@@ -574,6 +664,15 @@
 
 </script>
 
+<!-- Menú hamburguesa -->
+<div class="hamburger-menu">
+  <button id="hamburger-btn" class="hamburger-icon">☰</button>
+  <div id="menu-panel" class="menu-panel">
+    <button id="btnCopiaSeguridad">Copia de seguridad</button>
+    <button id="btnRestaurar">Restaurar copia</button>
+    <button id="btnUbicacion">Ubicación</button>
+  </div>
+</div>
 
 
 
@@ -775,27 +874,6 @@
 
 
 
-    <button id="btnUbicacion" style="
-  position: fixed;
-  bottom: clamp(65px, 6vh, 80px);
-  right: clamp(12px, 3vw, 20px);
-  z-index: 10001;
-  background: transparent;
-  color: white;
-  border: 1px solid rgb(0, 0, 0);
-  border-radius: 50%;
-  width: 10px;
-  height: 10px;
-  cursor: pointer;
-  font-size: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0;
-  transition: background 0.2s;
-">
-      📍
-    </button>
 
 
 
@@ -807,11 +885,7 @@
 
 
 
-    <div class="btn-container">
-      <button id="restoreBtn" class="mini-btn">♻️ Restaurar</button>
-      <button id="backupBtn" class="mini-btn">💾 Copia</button>
-      <input type="file" id="restoreFile" accept=".json" style="display:none;" />
-    </div>
+
 
 
     <!-- Select personalizado -->
@@ -1220,16 +1294,30 @@
       modalNotas.style.display = "flex";
     });
 
-    // ==================== MANTENER PULSADO ====================
+    // ==================== MANTENER PULSADO (compatible con iOS y Android) ====================
     let pressTimer;
     const btn = document.getElementById("btnMostrarTodasNotas");
-    btn.addEventListener("mousedown", function (e) {
+
+    function iniciarPresion() {
+      clearTimeout(pressTimer);
       pressTimer = setTimeout(() => {
         btn.dispatchEvent(new Event('contextmenu'));
       }, 800);
-    });
-    btn.addEventListener("mouseup", function () { clearTimeout(pressTimer); });
-    btn.addEventListener("mouseleave", function () { clearTimeout(pressTimer); });
+    }
+
+    function cancelarPresion() {
+      clearTimeout(pressTimer);
+    }
+
+    btn.addEventListener("mousedown", iniciarPresion);
+    btn.addEventListener("mouseup", cancelarPresion);
+    btn.addEventListener("mouseleave", cancelarPresion);
+
+    // Soporte para pantallas táctiles (iOS incluido)
+    btn.addEventListener("touchstart", iniciarPresion);
+    btn.addEventListener("touchend", cancelarPresion);
+    btn.addEventListener("touchcancel", cancelarPresion);
+
 
 
 
@@ -2629,6 +2717,29 @@
 
     });
 
+    // ====================
+    // MENU HAMBURGUESA
+    // ====================
+    const hamburgerBtn = document.getElementById('hamburger-btn');
+    const menuPanel = document.getElementById('menu-panel');
+    const backupBtnMenu = document.getElementById('btnCopiaSeguridad');
+    const restoreBtnMenu = document.getElementById('btnRestaurar');
+    const btnUbicacionMenu = document.getElementById('btnUbicacion');
+
+    // Toggle del menú
+    hamburgerBtn.addEventListener('click', () => {
+      menuPanel.classList.toggle('show');
+    });
+
+    // Reapuntar botones del menú a las funciones existentes
+    backupBtnMenu.addEventListener('click', () => backupBtn.click());
+    restoreBtnMenu.addEventListener('click', () => restoreBtn.click());
+    btnUbicacionMenu.addEventListener('click', () => document.getElementById('btnUbicacion').click());
+
+
+
+
+
 
 
     // ====================
@@ -2983,6 +3094,11 @@
         cerrarModal();
       });
     });
+
+
+
+
+
 
 
 
