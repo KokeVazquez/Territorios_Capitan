@@ -93,22 +93,21 @@ function anadirNotaPopup(id, territorioId) {
   ocultarMenu();
   var notasPoligonos = JSON.parse(localStorage.getItem(territorioId + "_notas") || "{}");
 
-  // Crear fondo modal
   const modalFondo = document.createElement("div");
   modalFondo.id = "modalAñadirNota";
   modalFondo.style.position = "fixed";
   modalFondo.style.top = "0";
   modalFondo.style.left = "0";
-  modalFondo.style.width = "100%";
-  modalFondo.style.height = "100%";
+  modalFondo.style.width = "100vw";
+  modalFondo.style.height = "100vh";
   modalFondo.style.background = "rgba(0,0,0,0.5)";
   modalFondo.style.display = "flex";
   modalFondo.style.alignItems = "center";
   modalFondo.style.justifyContent = "center";
-  modalFondo.style.zIndex = "99999"; // sobre todo
+  modalFondo.style.zIndex = "99999";
   modalFondo.style.backdropFilter = "blur(4px)";
+  modalFondo.style.webkitOverflowScrolling = "touch";
 
-  // Contenido del popup
   modalFondo.innerHTML = `
     <div style="
       background: rgba(24,23,23,0.07);
@@ -161,17 +160,25 @@ function anadirNotaPopup(id, territorioId) {
     </div>
   `;
 
-  // Agregar al body
   document.body.appendChild(modalFondo);
 
-  // Función para cerrar
-  document.getElementById("cancelarNota").onclick = () => {
-    document.body.removeChild(modalFondo);
-  };
-  document.getElementById("guardarNota").onclick = () => {
-    // Aquí tu lógica de guardar
-    document.body.removeChild(modalFondo);
-  };
+  const cerrarModal = () => document.body.removeChild(modalFondo);
+
+  // Soporte click y touch
+  document.getElementById("cancelarNota").addEventListener("click", cerrarModal);
+  document.getElementById("cancelarNota").addEventListener("touchstart", cerrarModal);
+
+  const guardarBtn = document.getElementById("guardarNota");
+  guardarBtn.addEventListener("click", () => {
+    // aquí tu lógica de guardar
+    cerrarModal();
+  });
+  guardarBtn.addEventListener("touchstart", () => {
+    // aquí tu lógica de guardar
+    cerrarModal();
+  });
+
+
 
 
 
