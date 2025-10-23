@@ -2787,15 +2787,35 @@
       const restoreBtnMenu = document.getElementById('btnRestaurar');
       const btnUbicacionMenu = document.getElementById('btnUbicacion');
 
+      // Toggle del menú
       hamburgerBtn.addEventListener('click', () => {
         menuPanel.classList.toggle('show');
       });
 
-      backupBtnMenu.addEventListener('click', hacerCopiaSeguridad);
-      restoreBtnMenu.addEventListener('click', restaurarCopia);
-      btnUbicacionMenu.addEventListener('click', activarUbicacion);
+      // Función para cerrar el menú si está abierto
+      function cerrarMenu() {
+        if (menuPanel.classList.contains('show')) {
+          menuPanel.classList.remove('show');
+        }
+      }
 
-    }); // ← ESTE ERA EL QUE FALTABA CERRAR
+      // Conectar botones a funciones y cerrar menú
+      backupBtnMenu.addEventListener('click', () => {
+        cerrarMenu();
+        hacerCopiaSeguridad();
+      });
+
+      restoreBtnMenu.addEventListener('click', () => {
+        cerrarMenu();
+        restaurarCopia();
+      });
+
+      btnUbicacionMenu.addEventListener('click', () => {
+        cerrarMenu();
+        activarUbicacion();
+      });
+    });
+
 
 
 
