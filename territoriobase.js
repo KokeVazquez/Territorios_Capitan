@@ -76,7 +76,6 @@ function mostrarMenu(e, pol, notasPoligonos, territorioId) {
     <button onclick="window.open('${pol._link}', '_blank'); ocultarMenu();">📍 Ubicación</button>
     <button onclick="anadirNotaPopup('${pol._id}', '${territorioId}');">➕ Añadir nota</button>
     <button onclick="verNotas('${pol._id}', '${territorioId}');">📒 Notas</button>
-    <button onclick="mostrarCapitanes('${territorioId}');">🧭 Capitanes</button>
   `;
 }
 

@@ -1513,13 +1513,11 @@
       function cargarRegistrosEnLista() {
         contLista.innerHTML = "";
         let hay = false;
-        const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
         window.todosLosTerritorios.forEach((territorio, tIndex) => {
-          let bloqueTerr = "";
+          let registrosTerritorioMes = "";
+
           territorio.eachLayer(pol => {
-            // si no está seleccionado y no pedimos todos, ignorar
-            if (!pol._selected && !mostrarTodos) return;
             const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
             (registros[pol._id] || []).forEach((reg, regIndex) => {
               const partes = reg.split('| Fecha:');
@@ -1529,42 +1527,61 @@
               const nota = fechaYNota.split('| Comentario:')[1]?.trim() || "";
               if (!fechaRaw) return;
 
-              // extraer mes del string de fecha
+              // extraer mes
               let mesRegistro = "";
               if (fechaRaw.includes('-')) mesRegistro = fechaRaw.split('-')[1];
               else if (fechaRaw.includes('/')) mesRegistro = fechaRaw.split('/')[1];
               else if (fechaRaw.length >= 5) mesRegistro = fechaRaw.slice(3, 5);
 
               if (mostrarTodos || mesRegistro === String(mes).padStart(2, '0')) {
-                if (!bloqueTerr) bloqueTerr += `<h3 style="margin:10px 0 6px;color:#444;">📍 Territorio ${tIndex + 1}</h3>`;
                 const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
                 const fechaForm = formatearFechaParaMostrar(fechaRaw);
-                bloqueTerr += `
-              <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${regIndex}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;position:relative;display:flex;justify-content:space-between;gap:8px;align-items:center;">
-               <div style="min-width:220px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
-  <strong>Cuadra ${cuadraLimpia}</strong>
-  <span>| Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span></span>
-  <span>Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaForm}</span></span>
-  ${nota ? `<div style="margin-top:6px;color:#333;"><small>Nota: ${nota}</small></div>` : ""}
-</div>
-                <div style="display:flex;gap:6px;flex-shrink:0;">
-                  <button class="btnEditarInline" style="padding:6px;border-radius:6px;border:none;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
-                  <button class="btnEliminar" style="padding:6px;border-radius:6px;border:none;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
-                  <button class="btnNota" style="padding:6px;border-radius:6px;border:none;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
-                </div>
+
+                registrosTerritorioMes += `
+            <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${regIndex}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;position:relative;display:flex;justify-content:space-between;gap:8px;align-items:center;">
+              <div style="min-width:220px; display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+                <strong>Cuadra ${cuadraLimpia}</strong>
+                <span>| Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${capitan}</span></span>
+                <span>Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaForm}</span></span>
+                ${nota ? `<div style="margin-top:6px;color:#333;"><small>Nota: ${nota}</small></div>` : ""}
               </div>
-            `;
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btnEditarInline" style="padding:6px;border-radius:6px;border:none;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
+                <button class="btnEliminar" style="padding:6px;border-radius:6px;border:none;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
+                <button class="btnNota" style="padding:6px;border-radius:6px;border:none;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
+              </div>
+            </div>
+          `;
                 hay = true;
               }
             });
           });
-          if (bloqueTerr) {
-            contLista.insertAdjacentHTML('beforeend', bloqueTerr);
+
+          // Solo crear accordion si hay registros para el mes
+          if (registrosTerritorioMes) {
+            contLista.insertAdjacentHTML('beforeend', `
+        <div class="territorioAccordion" style="border:1px solid #ccc;border-radius:8px;margin:6px 0;overflow:hidden;">
+          <div class="territorioHeader" style="background:#eee;padding:10px;cursor:pointer;font-weight:bold;">
+            📍 Territorio ${tIndex + 1}
+          </div>
+          <div class="territorioContent" style="display:none;padding:10px;max-height:400px;overflow:auto;">
+            ${registrosTerritorioMes}
+          </div>
+        </div>
+      `);
           }
         });
 
         if (!hay) contLista.innerHTML = `<p style="color:#666;margin:6px 0;">No se encontraron registros para este mes.</p>`;
+
+        contLista.querySelectorAll('.territorioHeader').forEach(header => {
+          header.addEventListener('click', () => {
+            const content = header.nextElementSibling;
+            content.style.display = content.style.display === 'none' ? 'block' : 'none';
+          });
+        });
       }
+
 
       cargarRegistrosEnLista();
 
@@ -2054,22 +2071,82 @@
 
         if (!capitan || !fecha) return alert("Ingresa nombre y fecha");
 
-        // Guardar en localStorage
         let registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
         if (!registros[pol._id]) registros[pol._id] = [];
+
+        // Revisar si ya hay registro para esa fecha
+        const registrosPol = registros[pol._id] || [];
+        const existe = Object.values(registros).some(arr =>
+          arr.some(reg => {
+            const fechaMatch = reg.match(/\| Fecha:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})/);
+            return fechaMatch && fechaMatch[1] === fecha;
+          })
+        );
+
+        if (existe) {
+          // Mostrar popup de registro existente
+          const popupExistente = document.createElement("div");
+          popupExistente.style.cssText = `
+    position: fixed; top:50%; left:50%; transform: translate(-50%, -50%);
+    background:#f44336; color:white; padding:20px; border-radius:10px; z-index:10000; max-width:300px; text-align:center;
+  `;
+          popupExistente.innerHTML = `
+    <p>Ya hay un registro existente para esta fecha.</p>
+    <button id="verRegistroExistente" style="padding:6px 12px;margin:5px;background:#fff;color:#f44336;border:none;border-radius:6px;cursor:pointer;">Ver</button>
+    <button id="cerrarPopupExistente" style="padding:6px 12px;margin:5px;background:#fff;color:#f44336;border:none;border-radius:6px;cursor:pointer;">Cerrar</button>
+  `;
+          document.body.appendChild(popupExistente);
+
+          popupExistente.querySelector("#cerrarPopupExistente").addEventListener("click", () => {
+            if (document.body.contains(popupExistente)) document.body.removeChild(popupExistente);
+          });
+
+          popupExistente.querySelector("#verRegistroExistente").addEventListener("click", () => {
+            const regExist = registrosPol.find(reg => reg.includes(`| Fecha: ${fecha}`));
+
+            const modalVer = document.createElement("div");
+            modalVer.style.cssText = `
+      position: fixed; top:50%; left:50%; transform: translate(-50%, -50%);
+      background:#fff; color:#000; padding:20px; border-radius:10px; z-index:10001; max-width:300px; text-align:center;
+    `;
+            modalVer.innerHTML = `
+      <p style="margin-bottom:10px;">${regExist}</p>
+      <button id="borrarRegistroExistente" style="padding:6px 12px;margin:5px;background:#f44336;color:#fff;border:none;border-radius:6px;cursor:pointer;">Borrar</button>
+      <button id="cerrarModalVer" style="padding:6px 12px;margin:5px;background:#777;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cerrar</button>
+    `;
+            document.body.appendChild(modalVer);
+
+            modalVer.querySelector("#cerrarModalVer").addEventListener("click", () => {
+              if (document.body.contains(modalVer)) document.body.removeChild(modalVer);
+            });
+
+            modalVer.querySelector("#borrarRegistroExistente").addEventListener("click", () => {
+              registros[pol._id] = registros[pol._id].filter(r => r !== regExist);
+              localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+              if (document.body.contains(modalVer)) document.body.removeChild(modalVer);
+              if (document.body.contains(popupExistente)) document.body.removeChild(popupExistente);
+              mostrarPopupConfirmacionCentro("Registro eliminado con éxito!");
+              pol._selected = false;
+              pol.setStyle({ color: "blue", fillColor: "blue", fillOpacity: 0.5 });
+              filtrarPorMes();
+            });
+          });
+
+          return; // No registrar si ya existe
+        }
+
+        // Guardar registro si no existe duplicado
         registros[pol._id].push(`Capitán: ${capitan} | Fecha: ${fecha}${comentario ? " | Comentario: " + comentario : ""}`);
         localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
 
-        // Cerrar popup y mostrar confirmación
         if (document.body.contains(modal)) document.body.removeChild(modal);
         window.popupActivo = false;
         mostrarPopupConfirmacionCentro("Capitán registrado con éxito!");
 
-        // Pintar polígono de gris indicando que está trabajado
         pol._selected = true;
         pol.setStyle({ color: "gray", fillColor: "gray", fillOpacity: 0.9 });
 
-        // Agregar icono de palomita en el centro del polígono
+        // Agregar icono de palomita
         const latlngs = pol.getLatLngs()[0];
         const coords = latlngs.map(ll => [ll.lng, ll.lat]);
         coords.push([coords[0][0], coords[0][1]]);
@@ -2078,16 +2155,10 @@
         const cLng = centroide.geometry.coordinates[0];
         const marker = L.marker([cLat, cLng], {
           interactive: false,
-          icon: L.divIcon({
-            className: "indicador-nota",
-            html: "✅",
-            iconSize: [20, 20],
-            iconAnchor: [10, 10]
-          })
+          icon: L.divIcon({ className: "indicador-nota", html: "✅", iconSize: [20, 20], iconAnchor: [10, 10] })
         }).addTo(map);
         window.indicadoresNotas.push(marker);
 
-        // Refrescar filtrado por mes para actualizar iconos
         filtrarPorMes();
       });
     }
@@ -3339,6 +3410,53 @@
         if (checkboxes.length === 0) return alert("Selecciona al menos una cuadra");
 
         const registros = JSON.parse(localStorage.getItem(`${territorio._id}_capitanes`) || "{}");
+
+        let hayDuplicado = false;
+        let registroExistente = "";
+
+        checkboxes.forEach(cb => {
+          const polId = cb.value;
+          if (!registros[polId]) registros[polId] = [];
+
+          // Revisar si ya hay registro para esa fecha en esta cuadra
+          registros[polId].forEach(reg => {
+            const fechaMatch = reg.match(/\| Fecha:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})/);
+            if (fechaMatch && fechaMatch[1] === fecha) {
+              hayDuplicado = true;
+              registroExistente = reg;
+            }
+          });
+        });
+
+        if (hayDuplicado) {
+          // Mostrar popup de advertencia
+          const popup = document.createElement('div');
+          popup.style.cssText = `
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fbbf24; color: #111; padding: 20px; border-radius: 12px;
+      z-index: 10000; max-width: 90%; text-align: center;
+    `;
+          popup.innerHTML = `
+      <p>Ya existe un registro para esta fecha en la/cuadras seleccionadas.</p>
+      <p><strong>${registroExistente}</strong></p>
+      <button id="verRegistro" style="margin:8px;padding:8px 12px;background:#4caf50;color:#fff;border:none;border-radius:6px;cursor:pointer;">Ver/Borrar</button>
+      <button id="cerrarPopup" style="margin:8px;padding:8px 12px;background:#777;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cerrar</button>
+    `;
+          document.body.appendChild(popup);
+
+          popup.querySelector('#cerrarPopup').addEventListener('click', () => document.body.removeChild(popup));
+
+          popup.querySelector('#verRegistro').addEventListener('click', () => {
+            // Abrimos un popup de edición/borrado como el de registros
+            mostrarPopupRegistroExistente(territorio._id, checkboxes[0].value, fecha);
+            document.body.removeChild(popup);
+          });
+
+          return; // no seguimos guardando
+        }
+
+        // Guardar registros
         checkboxes.forEach(cb => {
           const polId = cb.value;
           if (!registros[polId]) registros[polId] = [];
@@ -3350,7 +3468,42 @@
         alert("Registros guardados ✅");
         cerrarModal();
       });
+
+      // Función para mostrar popup de registro existente y poder borrarlo
+      function mostrarPopupRegistroExistente(territorioId, polId, fecha) {
+        const registros = JSON.parse(localStorage.getItem(`${territorioId}_capitanes`) || "{}");
+        const arr = registros[polId] || [];
+        const registroIndex = arr.findIndex(r => r.includes(`| Fecha: ${fecha}`));
+        if (registroIndex === -1) return;
+
+        const popup = document.createElement('div');
+        popup.style.cssText = `
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff; color: #111; padding: 20px; border-radius: 12px;
+    z-index: 10000; max-width: 90%; text-align: center; box-shadow:0 5px 20px rgba(0,0,0,0.3);
+  `;
+        popup.innerHTML = `
+    <p><strong>${arr[registroIndex]}</strong></p>
+    <button id="borrarRegistroExistente" style="margin:8px;padding:8px 12px;background:#e53935;color:#fff;border:none;border-radius:6px;cursor:pointer;">Borrar</button>
+    <button id="cerrarPopupExistente" style="margin:8px;padding:8px 12px;background:#777;color:#fff;border:none;border-radius:6px;cursor:pointer;">Cerrar</button>
+  `;
+        document.body.appendChild(popup);
+
+        popup.querySelector('#cerrarPopupExistente').addEventListener('click', () => document.body.removeChild(popup));
+
+        popup.querySelector('#borrarRegistroExistente').addEventListener('click', () => {
+          arr.splice(registroIndex, 1);
+          registros[polId] = arr;
+          localStorage.setItem(`${territorioId}_capitanes`, JSON.stringify(registros));
+          document.body.removeChild(popup);
+          alert("Registro eliminado ✅");
+          // Aquí podrías refrescar filtros si quieres
+          filtrarPorMes();
+        });
+      }
     });
+
 
 
 
