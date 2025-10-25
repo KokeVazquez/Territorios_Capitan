@@ -2941,94 +2941,132 @@
 
       modal.innerHTML = `
     <div id="modalContenido" style="
-      background:#f9fafb;border-radius:16px;width:90%;max-width:480px;
-      padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.25);
-      position:relative;animation:fadeIn 0.25s ease-in-out;
-    ">
-      <button id="cerrarModalTerritorio" style="
-          position:absolute;top:12px;right:12px;
-          border:none;background:none;
-          font-size:22px;cursor:pointer;color:#888;
-          transition:color 0.2s;
-        ">✖</button>
+  background:#f9fafb;
+  border-radius:16px;
+  width:90%;
+  max-width:480px;
+  padding:24px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.25);
+  position:relative;
+  animation:fadeIn 0.25s ease-in-out;
+  display:flex;
+  flex-direction:column;
+  max-height:90vh;
+">
+  <button id="cerrarModalTerritorio" style="
+      position:absolute;top:12px;right:12px;
+      border:none;background:none;
+      font-size:22px;cursor:pointer;color:#888;
+      transition:color 0.2s;
+    ">✖</button>
 
-      <h2 style="text-align:center;margin-bottom:18px;color:#111827;">Registrar Territorio</h2>
+  <h2 style="text-align:center;margin-bottom:18px;color:#111827;">Registrar Territorio</h2>
 
-      <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
-        Nombre Capitán
-        <input type="text" id="capitanTerritorio" style="
-            width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
-          " />
-      </label>
+  <div style="overflow-y:auto;flex:1;padding-right:4px;">
+    <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
+      Nombre Capitán
+      <input type="text" id="capitanTerritorio" style="
+          width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
+        " />
+    </label>
 
-      <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
-        Fecha
-        <input type="date" id="fechaTerritorio" style="
-            width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
-          " />
-      </label>
+    <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
+      Fecha
+      <input type="date" id="fechaTerritorio" style="
+          width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
+        " />
+    </label>
 
-      <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
-        Territorio
-        <div id="dropdownTerritorio" style="position:relative;margin-top:4px;">
-          <div id="selectedTerritorio" style="
-              padding:10px 12px;
-              border:1px solid #d1d5db;
-              border-radius:8px;
-              background:#f0f0f0;
-              cursor:pointer;
-              font-size:15px;
-            ">Seleccionar Territorio</div>
-          <div id="listaTerritorios" style="
-              position:absolute;top:100%;left:0;width:100%;max-height:180px;
-              overflow-y:auto;background:#fff;border:1px solid #d1d5db;border-radius:8px;
-              box-shadow:0 3px 8px rgba(0,0,0,0.15);display:none;z-index:1000;
-            "></div>
-        </div>
-      </label>
+    <label style="display:block;margin-bottom:12px;color:#374151;font-weight:600;">
+      Territorio
+      <div id="dropdownTerritorio" style="position:relative;margin-top:4px;">
+        <div id="selectedTerritorio" style="
+            padding:10px 12px;
+            border:1px solid #d1d5db;
+            border-radius:8px;
+            background:#f0f0f0;
+            cursor:pointer;
+            font-size:15px;
+          ">Seleccionar Territorio</div>
+        <div id="listaTerritorios" style="
+            position:absolute;top:100%;left:0;width:100%;max-height:180px;
+            overflow-y:auto;background:#fff;border:1px solid #d1d5db;border-radius:8px;
+            box-shadow:0 3px 8px rgba(0,0,0,0.15);display:none;z-index:1000;
+          "></div>
+      </div>
+    </label>
 
-      <div id="cuadrasCheckbox" style="
-          margin-top:10px;
-          max-height:140px;
-          overflow-y:auto;
-          border:1px solid #e5e7eb;
-          border-radius:8px;
-          padding:10px;
-          background:#fff;
-        "></div>
-<button id="agregarTerritorio" style="
-    margin-top:8px;
-    padding:10px 16px;
-    font-size:15px;
-    border:none;
-    border-radius:14px;
-    cursor:pointer;
-    background: black;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    color:#fff;
-    font-weight:600;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    <div id="cuadrasCheckbox" style="
+        margin-top:10px;
+        max-height:140px;
+        overflow-y:auto;
+        border:1px solid #e5e7eb;
+        border-radius:8px;
+        padding:10px;
+        background:#fff;
+      "></div>
+
+    <button id="agregarTerritorio" style="
+        margin-top:8px;
+        padding:10px 16px;
+        font-size:15px;
+        border:none;
+        border-radius:14px;
+        cursor:pointer;
+        background: black;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        color:#fff;
+        font-weight:600;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+      ">
+      Agregar ✅
+    </button>
+
+    <div id="listaAgregados" style="
+        margin-top:10px;
+        max-height:150px;
+        overflow-y:auto;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+        padding:8px;
+        background:#fff;
+      "></div>
+
+    <label style="display:block;margin-top:12px;color:#374151;font-weight:600;">
+      Comentario (opcional)
+      <input type="text" id="comentarioTerritorio" style="
+          width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
+        " />
+    </label>
+  </div>
+
+  <!-- BOTÓN FIJO -->
+  <div style="
+    position:sticky;
+    bottom:0;
+    background:#f9fafb;
+    padding-top:10px;
+    padding-bottom:4px;
+    text-align:center;
   ">
-  Agregar ✅
-</button>
-
-      <div id="listaAgregados" style="margin-top:10px;"></div>
-
-      <label style="display:block;margin-top:12px;color:#374151;font-weight:600;">
-        Comentario (opcional)
-        <input type="text" id="comentarioTerritorio" style="
-            width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
-          " />
-      </label>
-
-      <button id="guardarTodoTerritorios" style="
-          margin-top:18px;width:100%;padding:12px;
-          background:#16a34a;color:white;font-size:16px;border:none;border-radius:10px;
-          cursor:pointer;font-weight:600;transition:background 0.2s;
-        ">Guardar Todo</button>
-    </div>
+    <button id="guardarTodoTerritorios" style="
+        width:100%;
+        padding:12px;
+        background:#16a34a;
+        color:white;
+        font-size:16px;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        font-weight:600;
+        transition:background 0.2s;
+      ">
+      Guardar Todo
+    </button>
+  </div>
+</div>
 
     <style>
       @keyframes fadeIn { from{opacity:0;transform:scale(0.95);} to{opacity:1;transform:scale(1);} }
