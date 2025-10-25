@@ -3132,7 +3132,19 @@
           añoSeleccionado = fecha.getFullYear();
         }
 
-        let html = "";
+        let html = `
+    <div style="margin-bottom:8px;">
+      <button id="btnSeleccionarTodas" style="
+        background:#10b981;
+        color:white;
+        border:none;
+        padding:6px 10px;
+        border-radius:6px;
+        font-weight:bold;
+        cursor:pointer;
+      ">Seleccionar todas</button>
+    </div>
+  `;
 
         territorio.eachLayer(pol => {
           const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
@@ -3171,13 +3183,28 @@
 
           html += `
       <label style="display:flex;align-items:center;margin:6px 0;color:#374151;">
-        <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" style="margin-right:6px;">
+        <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" class="checkbox-cuadra" style="margin-right:6px;">
         Cuadra ${cuadraLimpia}
         ${infoExtra}
       </label>`;
         });
 
         cuadrasDiv.innerHTML = html;
+
+        // ✅ Función para marcar todas las cuadras visibles
+        const btnSeleccionarTodas = document.getElementById('btnSeleccionarTodas');
+        btnSeleccionarTodas.addEventListener('click', () => {
+          const checkboxes = cuadrasDiv.querySelectorAll('.checkbox-cuadra');
+
+          // Solo las que tienen número válido
+          const checkboxesValidas = Array.from(checkboxes).filter(cb => /^\d+$/.test(cb.dataset.cuadra));
+
+          const todasMarcadas = checkboxesValidas.every(cb => cb.checked);
+
+          checkboxesValidas.forEach(cb => cb.checked = !todasMarcadas);
+
+          btnSeleccionarTodas.textContent = todasMarcadas ? 'Seleccionar todas' : 'Desmarcar todas';
+        });
       }
 
       // 🔄 Vuelve a cargar cuadras cuando cambies la fecha
@@ -3206,9 +3233,9 @@
         const globo = document.createElement('div');
         globo.style.cssText = "padding:6px 10px;background:#d1fae5;border-radius:10px;margin:4px;display:inline-block;position:relative;";
         globo.innerHTML = `
-      ${capitan} - Territorio ${parseInt(idx) + 1} | Cuadras: ${cuadrasSeleccionadas.join(', ')}
-      <span style="position:absolute;top:-6px;right:-6px;cursor:pointer;font-weight:bold;" title="Eliminar">✖</span>
-    `;
+    ${capitan} - Territorio ${parseInt(idx) + 1} | Cuadras: ${cuadrasSeleccionadas.join(', ')}
+    <span style="position:absolute;top:-6px;right:-6px;cursor:pointer;font-weight:bold;" title="Eliminar">✖</span>
+  `;
         const cerrarGlobo = globo.querySelector('span');
         cerrarGlobo.addEventListener('click', () => {
           registrosPendientes = registrosPendientes.filter(r => r !== registrosPendientes[registrosPendientes.indexOf({ territorio: idx })]);
@@ -3249,8 +3276,8 @@
         registrosPendientes = [];
         listaAgregados.innerHTML = '';
       });
-    });
 
+    });
 
 
 
