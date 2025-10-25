@@ -3121,17 +3121,70 @@
 
       function cargarCuadras(idx) {
         const territorio = window.todosLosTerritorios[idx];
+        const registrosGuardados = JSON.parse(localStorage.getItem(`${territorio._id}_capitanes`) || "{}");
+        const fechaSeleccionada = document.getElementById('fechaTerritorio').value;
+        let mesSeleccionado = null;
+        let añoSeleccionado = null;
+
+        if (fechaSeleccionada) {
+          const fecha = new Date(fechaSeleccionada);
+          mesSeleccionado = fecha.getMonth() + 1;
+          añoSeleccionado = fecha.getFullYear();
+        }
+
         let html = "";
+
         territorio.eachLayer(pol => {
           const cuadraLimpia = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1").trim();
+          const registro = registrosGuardados[pol._id];
+
+          let infoExtra = "";
+          if (registro && registro.length > 0) {
+            const ultimo = registro[registro.length - 1];
+            const match = ultimo.match(/Trabajado por: (.*?) \| Fecha: ([^|]+)(?: \| (.*))?/);
+
+            if (match) {
+              const nombre = match[1];
+              const fecha = match[2];
+
+              // Extraer mes/año del registro guardado
+              const [anioReg, mesReg, diaReg] = fecha.includes("-")
+                ? fecha.split("-")  // formato yyyy-mm-dd
+                : fecha.split("/").reverse(); // formato dd/mm/yyyy
+
+              const mesNum = parseInt(mesReg, 10);
+              const anioNum = parseInt(anioReg, 10);
+
+              // Mostrar solo si coincide mes/año o si no se seleccionó ninguno
+              if (!mesSeleccionado || (mesSeleccionado === mesNum && añoSeleccionado === anioNum)) {
+                infoExtra = `<span style="
+            font-size:12px;
+            color:#10b981;
+            margin-left:6px;
+            background:rgba(16,185,129,0.1);
+            padding:2px 6px;
+            border-radius:6px;
+          ">${nombre} - ${fecha}</span>`;
+              }
+            }
+          }
+
           html += `
-        <label style="display:block;margin:6px 0;color:#374151;">
-          <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" style="margin-right:6px;">
-          Cuadra ${cuadraLimpia}
-        </label>`;
+      <label style="display:flex;align-items:center;margin:6px 0;color:#374151;">
+        <input type="checkbox" value="${pol._id}" data-cuadra="${cuadraLimpia}" style="margin-right:6px;">
+        Cuadra ${cuadraLimpia}
+        ${infoExtra}
+      </label>`;
         });
+
         cuadrasDiv.innerHTML = html;
       }
+
+      // 🔄 Vuelve a cargar cuadras cuando cambies la fecha
+      document.getElementById('fechaTerritorio').addEventListener('change', () => {
+        const idx = document.getElementById("selectedTerritorio").dataset.index;
+        if (idx !== undefined) cargarCuadras(idx);
+      });
 
       // ===== AGREGAR TERRITORIO + CUADRAS =====
       agregarBtn.addEventListener('click', () => {
