@@ -2810,7 +2810,7 @@
                   <div style="display:flex;gap:4px;">
                     <button class="btnEditarInline" style="padding:4px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
                     <button class="btnEliminar" style="padding:4px;border:none;border-radius:4px;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
-                    <button class="btnNota" style="padding:4px;border:none;border-radius:4px;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
+                    
                   </div>
                 </div>
               </div>`;
@@ -2943,20 +2943,6 @@
                         localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosGuardados));
                         item.remove();
                       }
-                    }
-                  });
-                });
-
-                // === Evento eliminar nota ===
-                popup.querySelectorAll(".btnEliminarNota").forEach(btn => {
-                  btn.addEventListener("click", () => {
-                    const capitan = btn.dataset.capitan;
-                    const confirmar = confirm(`¿Seguro que quieres eliminar la nota de ${capitan}?`);
-                    if (confirmar) {
-                      delete comentariosGuardados[capitan];
-                      localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosGuardados));
-                      alert("Nota eliminada.");
-                      document.body.removeChild(popup);
                     }
                   });
                 });
