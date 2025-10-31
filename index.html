@@ -1441,213 +1441,6 @@
 
 
 
-
-
-
-
-
-
-
-
-    // =========================================================================================================================================
-    // === Botón Territorios Terminados con notas integradas (bloque corregido y funcional) ===
-    // =========================================================================================================================================
-    document.getElementById("btnTerritoriosTerminados").addEventListener("click", function () {
-      const mes = document.getElementById('filtroMes').value;
-      if (!mes) { alert("Selecciona primero un mes o 'Todos los meses' para mostrar los territorios terminados."); return; }
-      const mostrarTodos = (mes === "todos");
-
-      // ---------- Formateo de fecha reutilizable ----------
-      function formatearFechaParaMostrar(fechaRaw) {
-        if (!fechaRaw) return "???";
-        const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-        try {
-          if (fechaRaw.includes("/")) {
-            const p = fechaRaw.split("/");
-            return `${p[2]}-${mesesCortos[parseInt(p[1], 10) - 1] || "???"}-${String(p[0]).padStart(2, "0")}`;
-          }
-          if (fechaRaw.includes("-")) {
-            const p = fechaRaw.split("-");
-            if (p[0].length === 4) {
-              const año = p[0], mesStr = p[1], dia = String(p[2]).padStart(2, "0");
-              const mesNum = isNaN(mesStr) ? (mesesCortos.indexOf(mesStr.toLowerCase()) + 1) : parseInt(mesStr, 10);
-              return `${año}-${(mesesCortos[mesNum - 1] || "??")}-${dia}`;
-            } else {
-              const dia = String(p[0]).padStart(2, "0"), mesStr = p[1], año = p[2];
-              const mesNum = isNaN(mesStr) ? (mesesCortos.indexOf(mesStr.toLowerCase()) + 1) : parseInt(mesStr, 10);
-              return `${año}-${(mesesCortos[mesNum - 1] || "??")}-${dia}`;
-            }
-          }
-          return fechaRaw;
-        } catch { return fechaRaw; }
-      }
-
-      // ---------- Genera HTML del modal ----------
-      function generarHtmlModal() {
-        return `
-      <div style="padding:20px;max-width:900px;margin:30px auto;background:#fff;border-radius:12px;position:relative;">
-        <button id="cerrarModalTT" style="position:absolute;right:12px;top:12px;border:none;background:none;font-size:20px;cursor:pointer;">✖</button>
-        <h2 style="text-align:center;margin-top:0;">🗺️ Territorios terminados - ${mostrarTodos ? "Todos los meses" : (new Date(2025, parseInt(mes) - 1).toLocaleString('es-MX', { month: 'long' }))}</h2>
-        <hr style="margin-bottom:12px;" />
-        <div id="listaRegistros" style="max-height:60vh;overflow:auto;padding-right:8px;"></div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
-          <button id="borrarRegistros" style="padding:10px 16px;background:#e53935;color:#fff;border:none;border-radius:8px;cursor:pointer;">🗑️ Borrar registros del mes</button>
-          <button id="btnExportarExcelPopup" style="padding:10px 16px;background:#43a047;color:#fff;border:none;border-radius:8px;cursor:pointer;">📤 Exportar a Excel</button>
-          <button id="btnCerrarModal" style="padding:10px 16px;background:#777;color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button>
-        </div>
-      </div>`;
-      }
-
-      // ---------- Crear modal ----------
-      const overlay = document.createElement("div");
-      overlay.id = "modalTerritoriosTerminados";
-      overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;";
-      overlay.innerHTML = generarHtmlModal();
-      document.body.appendChild(overlay);
-      const contLista = overlay.querySelector("#listaRegistros");
-
-      // ---------- Cargar registros ----------
-      function cargarRegistrosEnLista() {
-        contLista.innerHTML = "";
-        let hay = false;
-        window.todosLosTerritorios.forEach((territorio, tIndex) => {
-          let registrosHTML = "";
-          territorio.eachLayer(pol => {
-            const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
-            (registros[pol._id] || []).forEach((reg, idx) => {
-              const partes = reg.split('| Fecha:');
-              const cap = (partes[0] || "").replace("Capitán:", "").replace("Trabajado por:", "").trim();
-              const resto = (partes[1] || "").trim();
-              const fechaRaw = resto.split('| Comentario:')[0]?.trim() || "";
-              const nota = resto.split('| Comentario:')[1]?.trim() || "";
-              if (!fechaRaw) return;
-              let mesReg = "";
-              if (fechaRaw.includes('-')) mesReg = fechaRaw.split('-')[1];
-              else if (fechaRaw.includes('/')) mesReg = fechaRaw.split('/')[1];
-              if (mostrarTodos || mesReg === String(mes).padStart(2, '0')) {
-                const cuadra = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1");
-                const fechaFmt = formatearFechaParaMostrar(fechaRaw);
-                registrosHTML += `
-              <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${idx}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;">
-                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;">
-                  <div style="flex-grow:1;">
-                    <strong>Cuadra ${cuadra}</strong> |
-                    Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${cap}</span> |
-                    Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFmt}</span>
-                    ${nota ? `<br><small>Nota: ${nota}</small>` : ""}
-                  </div>
-                  <div style="display:flex;gap:4px;">
-                    <button class="btnEditarInline" style="padding:4px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
-                    <button class="btnEliminar" style="padding:4px;border:none;border-radius:4px;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
-                    <button class="btnNota" style="padding:4px;border:none;border-radius:4px;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
-                  </div>
-                </div>
-              </div>`;
-                hay = true;
-              }
-            });
-          });
-          if (registrosHTML)
-            contLista.insertAdjacentHTML('beforeend', `
-          <div class="territorioAccordion" style="border:1px solid #ccc;border-radius:8px;margin:6px 0;">
-            <div class="territorioHeader" style="background:#eee;padding:10px;cursor:pointer;font-weight:bold;">📍 Territorio ${tIndex + 1}</div>
-            <div class="territorioContent" style="display:none;padding:10px;">${registrosHTML}</div>
-          </div>`);
-        });
-        if (!hay) contLista.innerHTML = `<p style="color:#666;text-align:center;">No se encontraron registros para este mes.</p>`;
-        contLista.querySelectorAll('.territorioHeader').forEach(h => {
-          h.addEventListener('click', () => {
-            const c = h.nextElementSibling;
-            c.style.display = c.style.display === 'none' ? 'block' : 'none';
-          });
-        });
-      }
-      cargarRegistrosEnLista();
-
-      // ---------- Delegación de eventos ----------
-      overlay.addEventListener('click', e => {
-        const t = e.target;
-        if (t.id === 'cerrarModalTT' || t.id === 'btnCerrarModal') { overlay.remove(); return; }
-
-        if (t.classList.contains('btnEditarInline')) {
-          const item = t.closest('.registroItem');
-          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
-          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-          const texto = registros[polId]?.[index] || "";
-          const partes = texto.split('| Fecha:');
-          const cap = (partes[0] || "").replace("Capitán:", "").trim();
-          const resto = (partes[1] || "").trim();
-          const fechaRaw = resto.split('| Comentario:')[0]?.trim() || "";
-          const nota = resto.split('| Comentario:')[1]?.trim() || "";
-          const div = item.querySelector('div');
-          div.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:6px;flex-grow:1;">
-          <input class="inputEditNombre" style="padding:6px;border-radius:6px;border:1px solid #ccc;" value="${cap}" />
-          <input class="inputEditFecha" type="date" style="padding:6px;border-radius:6px;border:1px solid #ccc;" />
-          <small>Nota: ${nota || ""}</small>
-        </div>
-        <div style="display:flex;gap:4px;">
-          <button class="btnGuardarEd" style="padding:4px;border:none;border-radius:4px;background:#43a047;color:#fff;cursor:pointer;">💾</button>
-          <button class="btnCancelarEd" style="padding:4px;border:none;border-radius:4px;background:#999;color:#fff;cursor:pointer;">✖</button>
-        </div>`;
-          const inputFecha = item.querySelector('.inputEditFecha');
-          try {
-            if (fechaRaw.includes('-')) {
-              const p = fechaRaw.split('-');
-              if (p[0].length === 4) {
-                const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-                let m = isNaN(p[1]) ? (meses.indexOf(p[1].toLowerCase()) + 1) : parseInt(p[1], 10);
-                inputFecha.value = `${p[0]}-${String(m).padStart(2, '0')}-${String(p[2]).padStart(2, '0')}`;
-              }
-            }
-          } catch { }
-          return;
-        }
-
-        if (t.classList.contains('btnGuardarEd')) {
-          const item = t.closest('.registroItem');
-          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
-          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-          const nombre = item.querySelector('.inputEditNombre').value.trim();
-          const fecha = item.querySelector('.inputEditFecha').value;
-          if (!nombre) { alert("Nombre vacío"); return; }
-          const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-          const fSplit = fecha.split('-');
-          const fechaFmt = `${fSplit[0]}-${meses[parseInt(fSplit[1], 10) - 1]}-${fSplit[2]}`;
-          const textoPrev = registros[polId][index];
-          const notaPrev = textoPrev.split('| Comentario:')[1]?.trim() || "";
-          registros[polId][index] = `Capitán: ${nombre} | Fecha: ${fechaFmt}${notaPrev ? " | Comentario: " + notaPrev : ""}`;
-          localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-          cargarRegistrosEnLista();
-          return;
-        }
-
-        if (t.classList.contains('btnCancelarEd')) { cargarRegistrosEnLista(); return; }
-
-        if (t.classList.contains('btnEliminar')) {
-          const item = t.closest('.registroItem');
-          if (!confirm("¿Eliminar este registro?")) return;
-          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
-          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
-          registros[polId].splice(index, 1);
-          localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
-          item.remove();
-          return;
-        }
-      });
-    });
-
-
-
-
-
-
-
-
-
-
-
-
     // ================================================================================================================================
     // === Menú contextual ===
     // ================================================================================================================================
@@ -1786,21 +1579,22 @@
 
       // Contenido del popup con inputs y botones
       modal.innerHTML = `
-    <div style="
-      background:white; padding:25px; border-radius:12px; width:300px; text-align:center;
-      box-shadow:0 5px 20px rgba(0,0,0,0.3); position:relative;
-    ">
-      <button id="cerrarPopupCapitan" style="
-        position:absolute; top:8px; right:8px; font-size:18px; border:none; background:none; cursor:pointer;">✖</button>
-      <h3 style="margin-bottom:15px;">Registrar Capitán</h3>
-      <input id="inputCapitan" placeholder="Nombre del capitán" style="width:90%; padding:6px; margin-bottom:10px;"/>
-      <input id="inputFecha" type="date" style="width:90%; padding:6px; margin-bottom:10px;"/>
-      <textarea id="inputComentario" placeholder="Comentario (opcional)" style="width:90%; padding:6px; margin-bottom:15px;"></textarea>
-      <button id="guardarCapitan" style="
-        padding:8px 15px; background:#4caf50; color:white; border:none; border-radius:6px; cursor:pointer;
-      ">Guardar</button>
-    </div>
-  `;
+  <div style="
+    background:white; padding:25px; border-radius:12px; width:300px; text-align:center;
+    box-shadow:0 5px 20px rgba(0,0,0,0.3); position:relative;
+  ">
+    <button id="cerrarPopupCapitan" style="
+      position:absolute; top:8px; right:8px; font-size:18px; border:none; background:none; cursor:pointer;">✖</button>
+    <h3 style="margin-bottom:15px;">Registrar Capitán</h3>
+    <input id="inputCapitan" placeholder="Nombre del capitán" style="width:90%; padding:6px; margin-bottom:10px;"/>
+    <input id="inputFecha" type="date" style="width:90%; padding:6px; margin-bottom:10px;"/>
+    <textarea id="inputComentario" placeholder="Comentario (opcional)" style="width:90%; padding:6px; margin-bottom:15px;"></textarea>
+    <button id="guardarCapitan" style="
+      padding:8px 15px; background:#4caf50; color:white; border:none; border-radius:6px; cursor:pointer;
+    ">Guardar</button>
+  </div>
+`;
+
 
       document.body.appendChild(modal);
 
@@ -2925,6 +2719,389 @@
 
 
 
+
+    // =========================================================================================================================================
+    // === Botón Territorios Terminados con notas integradas (bloque corregido y funcional) ===
+    // =========================================================================================================================================
+    document.getElementById("btnTerritoriosTerminados").addEventListener("click", function () {
+      const mes = document.getElementById('filtroMes').value;
+      if (!mes) { alert("Selecciona primero un mes o 'Todos los meses' para mostrar los territorios terminados."); return; }
+      const mostrarTodos = (mes === "todos");
+
+      // ---------- Formateo de fecha reutilizable ----------
+      function formatearFechaParaMostrar(fechaRaw) {
+        if (!fechaRaw) return "???";
+        const mesesCortos = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+        try {
+          if (fechaRaw.includes("/")) {
+            const p = fechaRaw.split("/");
+            return `${p[2]}-${mesesCortos[parseInt(p[1], 10) - 1] || "???"}-${String(p[0]).padStart(2, "0")}`;
+          }
+          if (fechaRaw.includes("-")) {
+            const p = fechaRaw.split("-");
+            if (p[0].length === 4) {
+              const año = p[0], mesStr = p[1], dia = String(p[2]).padStart(2, "0");
+              const mesNum = isNaN(mesStr) ? (mesesCortos.indexOf(mesStr.toLowerCase()) + 1) : parseInt(mesStr, 10);
+              return `${año}-${(mesesCortos[mesNum - 1] || "??")}-${dia}`;
+            } else {
+              const dia = String(p[0]).padStart(2, "0"), mesStr = p[1], año = p[2];
+              const mesNum = isNaN(mesStr) ? (mesesCortos.indexOf(mesStr.toLowerCase()) + 1) : parseInt(mesStr, 10);
+              return `${año}-${(mesesCortos[mesNum - 1] || "??")}-${dia}`;
+            }
+          }
+          return fechaRaw;
+        } catch { return fechaRaw; }
+      }
+
+      // ---------- Genera HTML del modal ----------
+      function generarHtmlModal() {
+        return `
+      <div style="padding:20px;max-width:900px;margin:30px auto;background:#fff;border-radius:12px;position:relative;">
+        <button id="cerrarModalTT" style="position:absolute;right:12px;top:12px;border:none;background:none;font-size:20px;cursor:pointer;">✖</button>
+        <h2 style="text-align:center;margin-top:0;">🗺️ Territorios terminados - ${mostrarTodos ? "Todos los meses" : (new Date(2025, parseInt(mes) - 1).toLocaleString('es-MX', { month: 'long' }))}</h2>
+        <hr style="margin-bottom:12px;" />
+        <div id="listaRegistros" style="max-height:60vh;overflow:auto;padding-right:8px;"></div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+          <button id="borrarRegistros" style="padding:10px 16px;background:#e53935;color:#fff;border:none;border-radius:8px;cursor:pointer;">🗑️ Borrar registros del mes</button>
+          <button id="btnExportarExcelPopup" style="padding:10px 16px;background:#43a047;color:#fff;border:none;border-radius:8px;cursor:pointer;">📤 Exportar a Excel</button>
+          <button id="btnCerrarModal" style="padding:10px 16px;background:#777;color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button>
+        </div>
+      </div>`;
+      }
+
+      // ---------- Crear modal ----------
+      const overlay = document.createElement("div");
+      overlay.id = "modalTerritoriosTerminados";
+      overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:30px 12px;";
+      overlay.innerHTML = generarHtmlModal();
+      document.body.appendChild(overlay);
+      const contLista = overlay.querySelector("#listaRegistros");
+
+      // ---------- Cargar registros ----------
+      function cargarRegistrosEnLista() {
+        contLista.innerHTML = "";
+        let hay = false;
+        window.todosLosTerritorios.forEach((territorio, tIndex) => {
+          let registrosHTML = "";
+          territorio.eachLayer(pol => {
+            const registros = JSON.parse(localStorage.getItem(territorio._id + "_capitanes") || "{}");
+            (registros[pol._id] || []).forEach((reg, idx) => {
+              const partes = reg.split('| Fecha:');
+              const cap = (partes[0] || "").replace("Capitán:", "").replace("Trabajado por:", "").trim();
+              const resto = (partes[1] || "").trim();
+              const fechaRaw = resto.split('| Comentario:')[0]?.trim() || "";
+              const nota = resto.split('| Comentario:')[1]?.trim() || "";
+              if (!fechaRaw) return;
+              let mesReg = "";
+              if (fechaRaw.includes('-')) mesReg = fechaRaw.split('-')[1];
+              else if (fechaRaw.includes('/')) mesReg = fechaRaw.split('/')[1];
+              if (mostrarTodos || mesReg === String(mes).padStart(2, '0')) {
+                const cuadra = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1");
+                const fechaFmt = formatearFechaParaMostrar(fechaRaw);
+                registrosHTML += `
+              <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${idx}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;">
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;">
+                  <div style="flex-grow:1;">
+                    <strong>Cuadra ${cuadra}</strong> |
+                    Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${cap}</span> |
+                    Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFmt}</span>
+                    ${nota ? `<br><small>Nota: ${nota}</small>` : ""}
+                  </div>
+                  <div style="display:flex;gap:4px;">
+                    <button class="btnEditarInline" style="padding:4px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
+                    <button class="btnEliminar" style="padding:4px;border:none;border-radius:4px;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
+                    <button class="btnNota" style="padding:4px;border:none;border-radius:4px;background:#ffb74d;color:#000;cursor:pointer;">📝</button>
+                  </div>
+                </div>
+              </div>`;
+                hay = true;
+              }
+            });
+          });
+          if (registrosHTML) {
+            // Buscar si hay comentarios guardados en este territorio
+            const comentariosGuardados = JSON.parse(localStorage.getItem(`${territorio._id}_comentario`) || "{}");
+            const hayComentario = Object.keys(comentariosGuardados).length > 0;
+
+            // Crear encabezado con icono minimalista (🗒 reemplazado por ícono estilo bloc)
+            let headerHTML = `
+    <div class="territorioHeader" style="background:#eee;padding:10px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:space-between;">
+      <span>📍 Territorio ${tIndex + 1}</span>
+      ${hayComentario ? `<span class="iconoNota" style="color:#555;font-size:16px;cursor:pointer;" title="Ver notas">🗒</span>` : ""}
+    </div>
+  `;
+
+            // Insertar acordeón con el encabezado y contenido
+            contLista.insertAdjacentHTML('beforeend', `
+    <div class="territorioAccordion" style="border:1px solid #ccc;border-radius:8px;margin:6px 0;">
+      ${headerHTML}
+      <div class="territorioContent" style="display:none;padding:10px;">${registrosHTML}</div>
+    </div>
+  `);
+
+            // === Evento al hacer clic en el ícono de nota ===
+            if (hayComentario) {
+              const ultimoAccordion = contLista.lastElementChild;
+              const icono = ultimoAccordion.querySelector(".iconoNota");
+              icono.addEventListener("click", (e) => {
+                e.stopPropagation();
+
+                // Construir el contenido de las notas con clases correctas
+                let contenidoNotas = "";
+                for (const [capitan, comentario] of Object.entries(comentariosGuardados)) {
+                  contenidoNotas += `
+        <div class="notaItem" style="border-bottom:1px solid #ddd;padding:6px 0;">
+          <p class="notaTexto" style="margin:0 0 4px 0;"><strong>${capitan}</strong>: ${comentario}</p>
+          <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <button class="btnEditarNota" data-capitan="${capitan}" style="padding:4px 8px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;">Editar</button>
+            <button class="btnEliminarNota" data-capitan="${capitan}" style="padding:4px 8px;border:none;border-radius:4px;background:#e53935;color:#fff;cursor:pointer;">Eliminar</button>
+          </div>
+        </div>`;
+                }
+
+                // Crear popup elegante
+                const popup = document.createElement("div");
+                popup.style.cssText = `
+      position:fixed;top:0;left:0;width:100%;height:100%;
+      background:rgba(0,0,0,0.4);
+      display:flex;align-items:center;justify-content:center;
+      z-index:10000;animation:fadeInBg 0.2s ease;
+    `;
+                popup.innerHTML = `
+      <div style="
+          background:#fff;
+          border-radius:12px;
+          padding:18px;
+          max-width:380px;
+          width:85%;
+          box-shadow:0 4px 16px rgba(0,0,0,0.25);
+          font-family:Arial,sans-serif;
+          position:relative;
+          animation:fadeIn 0.25s ease-in-out;
+      ">
+          <button id="cerrarPopupNota" style="
+              position:absolute;top:8px;right:8px;
+              border:none;background:none;font-size:18px;
+              color:#666;cursor:pointer;
+          ">✖</button>
+          <h3 style="text-align:center;margin-bottom:10px;">Notas del Territorio ${tIndex + 1}</h3>
+          <div id="contenedorNotas" style="max-height:240px;overflow-y:auto;color:#374151;font-size:15px;">
+            ${contenidoNotas}
+          </div>
+      </div>
+    `;
+                document.body.appendChild(popup);
+
+                // Cerrar popup
+                popup.querySelector("#cerrarPopupNota").addEventListener("click", () => document.body.removeChild(popup));
+
+                // === Eventos de editar y eliminar notas ===
+                popup.querySelectorAll(".notaItem").forEach(item => {
+                  const btnEditar = item.querySelector(".btnEditarNota");
+                  const btnEliminar = item.querySelector(".btnEliminarNota");
+                  const notaDiv = item.querySelector(".notaTexto");
+                  const capitan = btnEditar.dataset.capitan;
+
+                  let editing = false;
+                  let textoOriginal = "";
+
+                  btnEditar.addEventListener("click", () => {
+                    if (!editing) {
+                      editing = true;
+                      textoOriginal = notaDiv.textContent.trim();
+                      notaDiv.contentEditable = "true";
+                      notaDiv.style.background = "#fff8dc";
+                      notaDiv.focus();
+                      btnEditar.textContent = "💾 Guardar";
+                      btnEliminar.textContent = "✖ Cancelar";
+                    } else {
+                      const nuevoTexto = notaDiv.textContent.trim();
+                      comentariosGuardados[capitan] = nuevoTexto;
+                      localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosGuardados));
+                      notaDiv.contentEditable = "false";
+                      notaDiv.style.background = "transparent";
+                      btnEditar.textContent = "Editar";
+                      btnEliminar.textContent = "Eliminar";
+                      editing = false;
+                      alert("Nota actualizada correctamente.");
+                    }
+                  });
+
+                  btnEliminar.addEventListener("click", () => {
+                    if (editing) {
+                      // Cancelar edición
+                      notaDiv.textContent = textoOriginal;
+                      notaDiv.contentEditable = "false";
+                      notaDiv.style.background = "transparent";
+                      btnEditar.textContent = "Editar";
+                      btnEliminar.textContent = "Eliminar";
+                      editing = false;
+                    } else {
+                      // Eliminar nota
+                      if (confirm(`¿Eliminar nota de ${capitan}?`)) {
+                        delete comentariosGuardados[capitan];
+                        localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosGuardados));
+                        item.remove();
+                      }
+                    }
+                  });
+                });
+
+                // === Evento eliminar nota ===
+                popup.querySelectorAll(".btnEliminarNota").forEach(btn => {
+                  btn.addEventListener("click", () => {
+                    const capitan = btn.dataset.capitan;
+                    const confirmar = confirm(`¿Seguro que quieres eliminar la nota de ${capitan}?`);
+                    if (confirmar) {
+                      delete comentariosGuardados[capitan];
+                      localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosGuardados));
+                      alert("Nota eliminada.");
+                      document.body.removeChild(popup);
+                    }
+                  });
+                });
+              });
+            }
+          }
+
+        });
+        if (!hay) contLista.innerHTML = `<p style="color:#666;text-align:center;">No se encontraron registros para este mes.</p>`;
+        contLista.querySelectorAll('.territorioHeader').forEach(h => {
+          h.addEventListener('click', () => {
+            const c = h.nextElementSibling;
+            c.style.display = c.style.display === 'none' ? 'block' : 'none';
+          });
+        });
+      }
+      cargarRegistrosEnLista();
+
+      // ---------- Delegación de eventos ----------
+      overlay.addEventListener('click', e => {
+        const t = e.target;
+        if (t.id === 'cerrarModalTT' || t.id === 'btnCerrarModal') { overlay.remove(); return; }
+
+        if (t.classList.contains('btnEditarInline')) {
+          const item = t.closest('.registroItem');
+          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          const texto = registros[polId]?.[index] || "";
+          const partes = texto.split('| Fecha:');
+          const cap = (partes[0] || "").replace("Capitán:", "").trim();
+          const resto = (partes[1] || "").trim();
+          const fechaRaw = resto.split('| Comentario:')[0]?.trim() || "";
+          const nota = resto.split('| Comentario:')[1]?.trim() || "";
+          const div = item.querySelector('div');
+          div.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:6px;flex-grow:1;">
+          <input class="inputEditNombre" style="padding:6px;border-radius:6px;border:1px solid #ccc;" value="${cap}" />
+          <input class="inputEditFecha" type="date" style="padding:6px;border-radius:6px;border:1px solid #ccc;" />
+          <small>Nota: ${nota || ""}</small>
+        </div>
+        <div style="display:flex;gap:4px;">
+          <button class="btnGuardarEd" style="padding:4px;border:none;border-radius:4px;background:#43a047;color:#fff;cursor:pointer;">💾</button>
+          <button class="btnCancelarEd" style="padding:4px;border:none;border-radius:4px;background:#999;color:#fff;cursor:pointer;">✖</button>
+        </div>`;
+          const inputFecha = item.querySelector('.inputEditFecha');
+          try {
+            if (fechaRaw.includes('-')) {
+              const p = fechaRaw.split('-');
+              if (p[0].length === 4) {
+                const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+                let m = isNaN(p[1]) ? (meses.indexOf(p[1].toLowerCase()) + 1) : parseInt(p[1], 10);
+                inputFecha.value = `${p[0]}-${String(m).padStart(2, '0')}-${String(p[2]).padStart(2, '0')}`;
+              }
+            }
+          } catch { }
+          return;
+        }
+
+        if (t.classList.contains('btnGuardarEd')) {
+          const item = t.closest('.registroItem');
+          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          const nombre = item.querySelector('.inputEditNombre').value.trim();
+          const fecha = item.querySelector('.inputEditFecha').value;
+          if (!nombre) { alert("Nombre vacío"); return; }
+          const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+          const fSplit = fecha.split('-');
+          const fechaFmt = `${fSplit[0]}-${meses[parseInt(fSplit[1], 10) - 1]}-${fSplit[2]}`;
+          const textoPrev = registros[polId][index];
+          const notaPrev = textoPrev.split('| Comentario:')[1]?.trim() || "";
+          registros[polId][index] = `Capitán: ${nombre} | Fecha: ${fechaFmt}${notaPrev ? " | Comentario: " + notaPrev : ""}`;
+          localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+          cargarRegistrosEnLista();
+          return;
+        }
+
+        if (t.classList.contains('btnCancelarEd')) { cargarRegistrosEnLista(); return; }
+
+        if (t.classList.contains('btnEliminar')) {
+          const item = t.closest('.registroItem');
+          if (!confirm("¿Eliminar este registro?")) return;
+          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          registros[polId].splice(index, 1);
+          localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
+          item.remove();
+          return;
+        }
+        if (t.classList.contains('btnNota')) {
+          const item = t.closest('.registroItem');
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
+          const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+          const texto = registros[polId]?.[index] || "";
+          const notaMatch = texto.match(/\|\s*Comentario\s*:\s*(.*)$/);
+          const nota = notaMatch ? notaMatch[1].trim() : "Sin nota";
+
+          // Crear popup elegante
+          const popup = document.createElement("div");
+          popup.style.cssText = `
+        position:fixed;top:0;left:0;width:100%;height:100%;
+        background:rgba(0,0,0,0.4);
+        display:flex;align-items:center;justify-content:center;
+        z-index:10000;animation:fadeInBg 0.2s ease;
+    `;
+          popup.innerHTML = `
+        <div style="
+            background:#fff;
+            border-radius:12px;
+            padding:18px;
+            max-width:380px;
+            width:85%;
+            box-shadow:0 4px 16px rgba(0,0,0,0.25);
+            font-family:Arial,sans-serif;
+            position:relative;
+            animation:fadeIn 0.25s ease-in-out;
+        ">
+            <button id="cerrarPopupNotaIndividual" style="
+                position:absolute;top:8px;right:8px;
+                border:none;background:none;font-size:18px;
+                color:#666;cursor:pointer;
+            ">✖</button>
+            <h3 style="text-align:center;margin-bottom:10px;">Nota</h3>
+            <p style="font-size:15px;color:#374151;">${nota}</p>
+        </div>
+    `;
+          document.body.appendChild(popup);
+
+          popup.querySelector("#cerrarPopupNotaIndividual")
+            .addEventListener("click", () => document.body.removeChild(popup));
+        }
+      });
+    });
+
+
+
+
+
+
+
+
+
+
+
     // ===============================
     // === BOTON REGISTRAR CAPITAN ===
     // ===============================
@@ -2997,50 +3174,50 @@
     </label>
 
     <div id="cuadrasCheckbox" style="
-        margin-top:10px;
-        max-height:140px;
-        overflow-y:auto;
-        border:1px solid #e5e7eb;
-        border-radius:8px;
-        padding:10px;
-        background:#fff;
-      "></div>
+  margin-top:10px;
+  max-height:140px;
+  overflow-y:auto;
+  border:1px solid #e5e7eb;
+  border-radius:8px;
+  padding:10px;
+  background:#fff;
+"></div>
 
-    <button id="agregarTerritorio" style="
-        margin-top:8px;
-        padding:10px 16px;
-        font-size:15px;
-        border:none;
-        border-radius:14px;
-        cursor:pointer;
-        background: black;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-        color:#fff;
-        font-weight:600;
-        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-      ">
-      Agregar ✅
-    </button>
+<label style="display:block;margin-top:12px;color:#374151;font-weight:600;">
+  Comentario (opcional)
+  <input type="text" id="comentarioTerritorio" style="
+    width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
+  " />
+</label>
 
-    <div id="listaAgregados" style="
-        margin-top:10px;
-        max-height:150px;
-        overflow-y:auto;
-        border:1px solid #d1d5db;
-        border-radius:8px;
-        padding:8px;
-        background:#fff;
-      "></div>
+<button id="agregarTerritorio" style="
+  margin-top:8px;
+  padding:10px 16px;
+  font-size:15px;
+  border:none;
+  border-radius:14px;
+  cursor:pointer;
+  background:black;
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  box-shadow:0 8px 32px rgba(0,0,0,0.2);
+  color:#fff;
+  font-weight:600;
+  transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+">
+  Agregar ✅
+</button>
 
-    <label style="display:block;margin-top:12px;color:#374151;font-weight:600;">
-      Comentario (opcional)
-      <input type="text" id="comentarioTerritorio" style="
-          width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
-        " />
-    </label>
-  </div>
+<div id="listaAgregados" style="
+  margin-top:10px;
+  max-height:150px;
+  overflow-y:auto;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  padding:8px;
+  background:#fff;
+"></div>
+
 
   <!-- BOTÓN FIJO -->
   <div style="
@@ -3229,18 +3406,30 @@
         const cuadrasSeleccionadas = Array.from(checkboxes).map(cb => cb.dataset.cuadra);
         registrosPendientes.push({ territorio: idx, capitan, fecha, cuadras: cuadrasSeleccionadas, comentario });
 
+        // Guardar comentario solo por territorio
+        if (comentario) {
+          const comentariosTerritorio = JSON.parse(localStorage.getItem(`${territorio._id}_comentario`) || "{}");
+          comentariosTerritorio[capitan] = comentario;
+          localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosTerritorio));
+        }
+
         // Crear mini-globo visual
         const globo = document.createElement('div');
-        globo.style.cssText = "padding:6px 10px;background:#d1fae5;border-radius:10px;margin:4px;display:inline-block;position:relative;";
+        globo.style.cssText = "padding:6px 10px;background:#d1fae5;border-radius:10px;margin:4px;display:flex;align-items:center;justify-content:space-between;";
+
         globo.innerHTML = `
-    ${capitan} - Territorio ${parseInt(idx) + 1} | Cuadras: ${cuadrasSeleccionadas.join(', ')}
-    <span style="position:absolute;top:-6px;right:-6px;cursor:pointer;font-weight:bold;" title="Eliminar">✖</span>
+    <div style="display:flex;align-items:center;">
+      ${capitan} - Territorio ${parseInt(idx) + 1}
+      ${comentario ? `<span class="nota-territorio" style="margin-left:6px;cursor:pointer;color:#f59e0b;" title="Ver comentario">📝</span>` : ''}
+    </div>
   `;
-        const cerrarGlobo = globo.querySelector('span');
-        cerrarGlobo.addEventListener('click', () => {
-          registrosPendientes = registrosPendientes.filter(r => r !== registrosPendientes[registrosPendientes.indexOf({ territorio: idx })]);
-          listaAgregados.removeChild(globo);
-        });
+
+        // Mostrar comentario al picarle al icono 📝
+        if (comentario) {
+          const notaIcon = globo.querySelector('.nota-territorio');
+          notaIcon.addEventListener('click', () => alert(comentario));
+        }
+
         listaAgregados.appendChild(globo);
 
         // Limpiar selección para nuevo territorio
@@ -3255,6 +3444,7 @@
           const territorio = window.todosLosTerritorios[reg.territorio];
           const registros = JSON.parse(localStorage.getItem(`${territorio._id}_capitanes`) || "{}");
 
+          // Guardar cuadras
           reg.cuadras.forEach(c => {
             let polId = null;
             territorio.eachLayer(pol => {
@@ -3263,7 +3453,7 @@
             });
             if (!polId) return;
             if (!registros[polId]) registros[polId] = [];
-            const registroTexto = `Trabajado por: ${reg.capitan} | Fecha: ${reg.fecha}${reg.comentario ? " | " + reg.comentario : ""}`;
+            const registroTexto = `Trabajado por: ${reg.capitan} | Fecha: ${reg.fecha}`;
             registros[polId].push(registroTexto);
             territorio.eachLayer(pol => { if (pol._id === polId) pol._selected = true; });
           });
@@ -3276,10 +3466,7 @@
         registrosPendientes = [];
         listaAgregados.innerHTML = '';
       });
-
     });
-
-
 
 
 
