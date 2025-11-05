@@ -2766,17 +2766,39 @@
       // ---------- Genera HTML del modal ----------
       function generarHtmlModal() {
         return `
-      <div style="padding:20px;max-width:900px;margin:30px auto;background:#fff;border-radius:12px;position:relative;">
-        <button id="cerrarModalTT" style="position:absolute;right:12px;top:12px;border:none;background:none;font-size:20px;cursor:pointer;">✖</button>
-        <h2 style="text-align:center;margin-top:0;">🗺️ Territorios terminados - ${mostrarTodos ? "Todos los meses" : (new Date(2025, parseInt(mes) - 1).toLocaleString('es-MX', { month: 'long' }))}</h2>
-        <hr style="margin-bottom:12px;" />
-        <div id="listaRegistros" style="max-height:60vh;overflow:auto;padding-right:8px;"></div>
-        <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
-          <button id="borrarRegistros" style="padding:10px 16px;background:#e53935;color:#fff;border:none;border-radius:8px;cursor:pointer;">🗑️ Borrar registros del mes</button>
-          <button id="btnExportarExcelPopup" style="padding:10px 16px;background:#43a047;color:#fff;border:none;border-radius:8px;cursor:pointer;">📤 Exportar a Excel</button>
-          <button id="btnCerrarModal" style="padding:10px 16px;background:#777;color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button>
-        </div>
-      </div>`;
+  <div 
+  style="padding:20px;max-width:900px;margin:30px auto;background:#fff;border-radius:12px;position:relative;">
+    <button id="cerrarModalTT" style="position:absolute;right:12px;top:12px;border:none;background:none;font-size:20px;cursor:pointer;">✖</button>
+    <h2 style="text-align:center;margin-top:0;">🗺️ Territorios terminados - ${mostrarTodos ? "Todos los meses" : (new Date(2025, parseInt(mes) - 1).toLocaleString('es-MX', { month: 'long' }))}</h2>
+    <hr style="margin-bottom:12px;" />
+
+    <!-- 🔸 Botón de filtro “Visita S.C.” -->
+    <div style="margin-bottom:14px;text-align:center;">
+      <button id="btnVisitaSC" style="
+        background:#f59e0b;
+        color:white;
+        border:none;
+        padding:10px 16px;
+        border-radius:8px;
+        cursor:pointer;
+        font-weight:600;
+        box-shadow:0 2px 6px rgba(0,0,0,0.15);
+        transition:background 0.2s ease;
+      " onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
+        📅 Visita S.C.
+      </button>
+    </div>
+
+    <!-- 🔸 Lista de registros -->
+    <div id="listaRegistros" style="max-height:60vh;overflow:auto;padding-right:8px;"></div>
+
+    <!-- 🔸 Botones de acciones inferiores -->
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+      <button id="borrarRegistros" style="padding:10px 16px;background:#e53935;color:#fff;border:none;border-radius:8px;cursor:pointer;">🗑️ Borrar registros del mes</button>
+      <button id="btnExportarExcelPopup" style="padding:10px 16px;background:#43a047;color:#fff;border:none;border-radius:8px;cursor:pointer;">📤 Exportar a Excel</button>
+      <button id="btnCerrarModal" style="padding:10px 16px;background:#777;color:#fff;border:none;border-radius:8px;cursor:pointer;">Cerrar</button>
+    </div>
+  </div>`;
       }
 
       // ---------- Crear modal ----------
@@ -2786,6 +2808,73 @@
       overlay.innerHTML = generarHtmlModal();
       document.body.appendChild(overlay);
       const contLista = overlay.querySelector("#listaRegistros");
+
+      // ---------- Btn para VISITA S.C ----------
+      document.getElementById("btnVisitaSC").addEventListener("click", () => {
+        const listaRegistros = document.getElementById("listaRegistros");
+        listaRegistros.innerHTML = "<p style='text-align:center;color:#555;'>Buscando visitas...</p>";
+
+        // Recorrer todo el localStorage y buscar registros con "VisitaSC:"
+        const resultados = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!key.endsWith("_capitanes")) continue;
+
+          try {
+            const registrosPorPol = JSON.parse(localStorage.getItem(key));
+            Object.entries(registrosPorPol).forEach(([polId, arr]) => {
+              (arr || []).forEach(txt => {
+                const visita = ("" + txt).match(/\|\s*VisitaSC\s*:\s*([0-9]{4}-[0-9]{2})/);
+                if (visita) {
+                  const capitan = ("" + txt).match(/Trabajado por:\s*([^|]+)/);
+                  const fecha = ("" + txt).match(/Fecha:\s*([0-9-]+)/);
+                  resultados.push({
+                    polId,
+                    territorio: key.replace("_capitanes", ""),
+                    capitan: capitan ? capitan[1].trim() : "—",
+                    fecha: fecha ? fecha[1].trim() : "—",
+                    mes: visita[1]
+                  });
+                }
+              });
+            });
+          } catch (e) { }
+        }
+
+        if (!resultados.length) {
+          listaRegistros.innerHTML = "<p style='text-align:center;color:#777;'>No hay registros de visitas S.C.</p>";
+          return;
+        }
+
+        // Agrupar por mes
+        const porMes = {};
+        resultados.forEach(r => {
+          if (!porMes[r.mes]) porMes[r.mes] = [];
+          porMes[r.mes].push(r);
+        });
+
+        listaRegistros.innerHTML = Object.entries(porMes)
+          .map(([mes, items]) => `
+      <div style="margin-bottom:15px;">
+        <h3 style="margin:6px 0;color:#0ea5a4;">📅 Visita S.C. - ${mes}</h3>
+        ${items
+              .map(r => `
+            <div style="background:#f8f8f8;border-radius:8px;padding:8px;margin:4px 0;">
+              <strong>${r.territorio}</strong> | Cuadra: ${r.polId.replace(/.*Cuadra(\d+).*/i, "$1")}
+              <br>👤 Capitán: <b>${r.capitan}</b> 
+              <br>🗓️ Fecha: ${r.fecha}
+            </div>
+          `)
+              .join("")}
+      </div>
+    `)
+          .join("");
+      });
+
+
+
+
+
 
       // ---------- Cargar registros ----------
       function cargarRegistrosEnLista() {
@@ -3185,6 +3274,11 @@
     width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;margin-top:4px;font-size:15px;
   " />
 </label>
+<div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+  <input type="checkbox" id="visitaSC" style="width:18px; height:18px; cursor:pointer;">
+  <label for="visitaSC" style="cursor:pointer;">Visita S.C.</label>
+  <input type="month" id="mesVisita" style="display:none; padding:4px; border-radius:6px; border:1px solid #ccc;">
+</div>
 
 <button id="agregarTerritorio" style="
   margin-top:8px;
@@ -3263,15 +3357,32 @@
       };
       document.getElementById('cerrarModalTerritorio').addEventListener('click', cerrarModal);
 
-      // Dropdown de territorios
+      // ===============================
+      // === VARIABLES DEL MODAL ===
+      // ===============================
       const selectedTerritorio = document.getElementById("selectedTerritorio");
       const listaTerritorios = document.getElementById("listaTerritorios");
       const cuadrasDiv = document.getElementById('cuadrasCheckbox');
       const listaAgregados = document.getElementById('listaAgregados');
       const agregarBtn = document.getElementById('agregarTerritorio');
 
+      // === Aquí colocas el código nuevo ===
+      const visitaCheckbox = document.getElementById("visitaSC");
+      const mesVisitaInput = document.getElementById("mesVisita");
+
+      visitaCheckbox.addEventListener("change", () => {
+        if (visitaCheckbox.checked) {
+          mesVisitaInput.style.display = "inline-block";
+          mesVisitaInput.focus();
+        } else {
+          mesVisitaInput.value = "";
+          mesVisitaInput.style.display = "none";
+        }
+      });
+
       let registrosPendientes = [];
 
+      // Luego ya sigue tu forEach de territorios
       window.todosLosTerritorios.forEach((t, i) => {
         const div = document.createElement("div");
         div.textContent = `Territorio ${i + 1}`;
@@ -3400,7 +3511,15 @@
 
         // Construir registro pendiente
         const cuadrasSeleccionadas = Array.from(checkboxes).map(cb => cb.dataset.cuadra);
-        registrosPendientes.push({ territorio: idx, capitan, fecha, cuadras: cuadrasSeleccionadas, comentario });
+        registrosPendientes.push({
+          territorio: idx,
+          capitan,
+          fecha,
+          cuadras: cuadrasSeleccionadas,
+          comentario,
+          visitaSC: visitaCheckbox.checked ? mesVisitaInput.value : null
+        });
+
 
         // Guardar comentario solo por territorio
         if (comentario) {
@@ -3476,7 +3595,12 @@
             });
             if (!polId) return;
             if (!registros[polId]) registros[polId] = [];
-            const registroTexto = `Trabajado por: ${reg.capitan} | Fecha: ${reg.fecha}`;
+            // Formato base
+            let registroTexto = `Trabajado por: ${reg.capitan} | Fecha: ${reg.fecha}`;
+            // Si el registro pendiente trae visitaSC (valor tipo "YYYY-MM"), lo añadimos
+            if (reg.visitaSC) {
+              registroTexto += ` | VisitaSC: ${reg.visitaSC}`; // ejemplo: " | VisitaSC: 2025-11"
+            }
             registros[polId].push(registroTexto);
             territorio.eachLayer(pol => { if (pol._id === polId) pol._selected = true; });
           });
