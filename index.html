@@ -3409,16 +3409,43 @@
           localStorage.setItem(`${territorio._id}_comentario`, JSON.stringify(comentariosTerritorio));
         }
 
-        // Crear mini-globo visual
+        // Crear mini-globo visual con botón eliminar
         const globo = document.createElement('div');
-        globo.style.cssText = "padding:6px 10px;background:#d1fae5;border-radius:10px;margin:4px;display:flex;align-items:center;justify-content:space-between;";
+        globo.style.cssText = `
+  padding:6px 10px;
+  background:#d1fae5;
+  border-radius:10px;
+  margin:4px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+`;
 
         globo.innerHTML = `
-    <div style="display:flex;align-items:center;">
-      ${capitan} - Territorio ${parseInt(idx) + 1}
-      ${comentario ? `<span class="nota-territorio" style="margin-left:6px;cursor:pointer;color:#f59e0b;" title="Ver comentario">📝</span>` : ''}
-    </div>
-  `;
+  <div style="display:flex;align-items:center;gap:6px;">
+    <span>${capitan} - Territorio ${parseInt(idx) + 1}</span>
+    ${comentario ? `<span class="nota-territorio" style="cursor:pointer;color:#f59e0b;" title="Ver comentario">📝</span>` : ''}
+  </div>
+  <button class="btnEliminarRegistro" style="
+    background:none;
+    border:none;
+    color:#dc2626;
+    font-size:18px;
+    cursor:pointer;
+    margin-left:8px;
+  ">✖</button>
+`;
+
+        // Evento para eliminar registro
+        globo.querySelector(".btnEliminarRegistro").addEventListener("click", () => {
+          if (confirm("¿Eliminar este registro?")) {
+            globo.remove();
+            // Elimina también del arreglo de pendientes
+            registrosPendientes = registrosPendientes.filter(r =>
+              !(r.capitan === capitan && r.territorio === idx && r.fecha === fecha)
+            );
+          }
+        });
 
         // Mostrar comentario al picarle al icono 📝
         if (comentario) {
