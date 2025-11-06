@@ -3128,56 +3128,76 @@
 
         if (t.classList.contains('btnEditarInline')) {
           const item = t.closest('.registroItem');
-          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
+
           const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
           const texto = registros[polId]?.[index] || "";
+
+          // Extraer partes
           const partes = texto.split('| Fecha:');
           const cap = (partes[0] || "").replace("Capitán:", "").trim();
           const resto = (partes[1] || "").trim();
           const fechaRaw = resto.split('| Comentario:')[0]?.trim() || "";
           const nota = resto.split('| Comentario:')[1]?.trim() || "";
+
+          // Construir el formulario de edición
           const div = item.querySelector('div');
           div.innerHTML = `
-        <div style="display:flex;flex-direction:column;gap:6px;flex-grow:1;">
-          <input class="inputEditNombre" style="padding:6px;border-radius:6px;border:1px solid #ccc;" value="${cap}" />
-          <input class="inputEditFecha" type="date" style="padding:6px;border-radius:6px;border:1px solid #ccc;" />
-          <small>Nota: ${nota || ""}</small>
-        </div>
-        <div style="display:flex;gap:4px;">
-          <button class="btnGuardarEd" style="padding:4px;border:none;border-radius:4px;background:#43a047;color:#fff;cursor:pointer;">💾</button>
-          <button class="btnCancelarEd" style="padding:4px;border:none;border-radius:4px;background:#999;color:#fff;cursor:pointer;">✖</button>
-        </div>`;
+    <div style="display:flex;flex-direction:column;gap:6px;flex-grow:1;">
+      <input class="inputEditNombre" style="padding:6px;border-radius:6px;border:1px solid #ccc;" value="${cap}" />
+      <input class="inputEditFecha" type="date" style="padding:6px;border-radius:6px;border:1px solid #ccc;" />
+      <small>Nota: ${nota || ""}</small>
+    </div>
+    <div style="display:flex;gap:4px;">
+      <button class="btnGuardarEd" style="padding:4px;border:none;border-radius:4px;background:#43a047;color:#fff;cursor:pointer;">💾</button>
+      <button class="btnCancelarEd" style="padding:4px;border:none;border-radius:4px;background:#999;color:#fff;cursor:pointer;">✖</button>
+    </div>`;
+
+          // Convertir la fecha guardada (tipo 6-nov-2025) a formato HTML (YYYY-MM-DD)
           const inputFecha = item.querySelector('.inputEditFecha');
-          try {
-            if (fechaRaw.includes('-')) {
-              const p = fechaRaw.split('-');
-              if (p[0].length === 4) {
-                const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-                let m = isNaN(p[1]) ? (meses.indexOf(p[1].toLowerCase()) + 1) : parseInt(p[1], 10);
-                inputFecha.value = `${p[0]}-${String(m).padStart(2, '0')}-${String(p[2]).padStart(2, '0')}`;
-              }
+          if (fechaRaw && !fechaRaw.includes('aaaa')) {
+            const [dia, mesTxt, año] = fechaRaw.split('-');
+            const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+            const mesNum = meses.indexOf(mesTxt.toLowerCase()) + 1;
+            if (mesNum > 0) {
+              inputFecha.value = `${año}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             }
-          } catch { }
+          }
           return;
         }
 
+
         if (t.classList.contains('btnGuardarEd')) {
           const item = t.closest('.registroItem');
-          const territorioId = item.dataset.territorio, polId = item.dataset.pol, index = parseInt(item.dataset.index, 10);
+          const territorioId = item.dataset.territorio;
+          const polId = item.dataset.pol;
+          const index = parseInt(item.dataset.index, 10);
           const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
+
           const nombre = item.querySelector('.inputEditNombre').value.trim();
           const fecha = item.querySelector('.inputEditFecha').value;
           if (!nombre) { alert("Nombre vacío"); return; }
-          const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-          const fSplit = fecha.split('-');
-          const fechaFmt = `${fSplit[0]}-${meses[parseInt(fSplit[1], 10) - 1]}-${fSplit[2]}`;
+
+          // Si no se modificó la fecha, conservar la anterior
           const textoPrev = registros[polId][index];
           const notaPrev = textoPrev.split('| Comentario:')[1]?.trim() || "";
+          const fechaAnterior = (textoPrev.split('| Fecha:')[1] || "").split('| Comentario:')[0]?.trim() || "";
+
+          let fechaFmt = fechaAnterior;
+          if (fecha) {
+            const [y, m, d] = fecha.split('-');
+            const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+            fechaFmt = `${parseInt(d, 10)}-${meses[parseInt(m, 10) - 1]}-${y}`;
+          }
+
           registros[polId][index] = `Capitán: ${nombre} | Fecha: ${fechaFmt}${notaPrev ? " | Comentario: " + notaPrev : ""}`;
           localStorage.setItem(territorioId + "_capitanes", JSON.stringify(registros));
           cargarRegistrosEnLista();
           return;
         }
+
 
         if (t.classList.contains('btnCancelarEd')) { cargarRegistrosEnLista(); return; }
 
