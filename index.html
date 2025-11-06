@@ -2809,9 +2809,24 @@
       document.body.appendChild(overlay);
       const contLista = overlay.querySelector("#listaRegistros");
 
-      // ---------- Btn para VISITA S.C ----------
+      // ---------- Btn para VISITA S.C. ----------
+      let mostrandoVisitas = false; // bandera para saber si ya se muestran las visitas
+      let respaldoLista = ""; // para guardar temporalmente el contenido original
+
       document.getElementById("btnVisitaSC").addEventListener("click", () => {
         const listaRegistros = document.getElementById("listaRegistros");
+
+        // Si ya estamos mostrando visitas, volvemos al menú normal
+        if (mostrandoVisitas) {
+          listaRegistros.innerHTML = respaldoLista; // restaurar vista original
+          document.getElementById("btnVisitaSC").textContent = "Visita S.C.";
+          mostrandoVisitas = false;
+          return;
+        }
+
+        // Guardar la vista actual antes de cambiarla
+        respaldoLista = listaRegistros.innerHTML;
+
         listaRegistros.innerHTML = "<p style='text-align:center;color:#555;'>Buscando visitas...</p>";
 
         // Recorrer todo el localStorage y buscar registros con "VisitaSC:"
@@ -2869,8 +2884,11 @@
       </div>
     `)
           .join("");
-      });
 
+        // Actualizar estado
+        document.getElementById("btnVisitaSC").textContent = "Volver";
+        mostrandoVisitas = true;
+      });
 
 
 
@@ -2898,21 +2916,36 @@
                 const cuadra = pol._id.replace(/^.*?Cuadra(\d+).*$/i, "$1");
                 const fechaFmt = formatearFechaParaMostrar(fechaRaw);
                 registrosHTML += `
-              <div class="registroItem" data-territorio="${territorio._id}" data-pol="${pol._id}" data-index="${idx}" style="background:#f8f8f8;padding:10px;border-radius:8px;margin:8px 0;">
-                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:space-between;">
-                  <div style="flex-grow:1;">
-                    <strong>Cuadra ${cuadra}</strong> |
-                    Trabajado por: <span class="nombreCapitan" style="font-weight:bold;color:red;">${cap}</span> |
-                    Fecha: <span class="fechaRegistro" style="font-weight:bold;color:red;">${fechaFmt}</span>
-                    ${nota ? `<br><small>Nota: ${nota}</small>` : ""}
-                  </div>
-                  <div style="display:flex;gap:4px;">
-                    <button class="btnEditarInline" style="padding:4px;border:none;border-radius:4px;background:#1976d2;color:#fff;cursor:pointer;">✏️</button>
-                    <button class="btnEliminar" style="padding:4px;border:none;border-radius:4px;background:#e53935;color:#fff;cursor:pointer;">🗑️</button>
-                    
-                  </div>
-                </div>
-              </div>`;
+             <div class="registroItem" 
+    data-territorio="${territorio._id}" 
+    data-pol="${pol._id}" 
+    data-index="${idx}" 
+    style="background:#f8f8f8;border-radius:8px;padding:10px;margin:8px 0;box-shadow:0 1px 3px rgba(0,0,0,0.1);">
+    
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <div>
+        <span style="color:#555;">Cuadra ${cuadra}</span>
+      </div>
+      <div>
+        👤 Capitán: <b style="color:#1976d2;">${cap}</b><br>
+        🗓️ Fecha: <span class="fechaRegistro" style="font-weight:bold;color:#333;">${fechaFmt}</span>
+        ${nota ? `<br>📝 <small style="color:#555;">${nota}</small>` : ""}
+      </div>
+    </div>
+
+    <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:8px;">
+      <button class="btnEditarInline" 
+        style="padding:4px 6px;border:none;border-radius:6px;background:#1976d2;color:#fff;cursor:pointer;">
+        ✏️
+      </button>
+      <button class="btnEliminar" 
+        style="padding:4px 6px;border:none;border-radius:6px;background:#e53935;color:#fff;cursor:pointer;">
+        🗑️
+      </button>
+    </div>
+  </div>
+`;
+
                 hay = true;
               }
             });
