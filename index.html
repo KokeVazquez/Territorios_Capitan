@@ -3155,20 +3155,32 @@
       <button class="btnCancelarEd" style="padding:4px;border:none;border-radius:4px;background:#999;color:#fff;cursor:pointer;">✖</button>
     </div>`;
 
-          // Convertir la fecha guardada (tipo 6-nov-2025) a formato HTML (YYYY-MM-DD)
+          // Convertir la fecha guardada (tipo 6-nov-2025 o 2025-nov-6) a formato HTML (YYYY-MM-DD)
           const inputFecha = item.querySelector('.inputEditFecha');
           if (fechaRaw && !fechaRaw.includes('aaaa')) {
-            const [dia, mesTxt, año] = fechaRaw.split('-');
             const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+            let dia, mesTxt, año;
+            const partes = fechaRaw.split('-').map(p => p.trim());
+
+            if (partes[0].length === 4) {
+              // Formato tipo 2025-nov-06
+              [año, mesTxt, dia] = partes;
+            } else {
+              // Formato tipo 6-nov-2025
+              [dia, mesTxt, año] = partes;
+            }
+
             const mesNum = meses.indexOf(mesTxt.toLowerCase()) + 1;
-            if (mesNum > 0) {
+            if (mesNum > 0 && año && dia) {
               inputFecha.value = `${año}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
             }
           }
           return;
         }
 
-
+        // ========================================
+        // === GUARDAR EDICIÓN CORREGIDO ===
+        // ========================================
         if (t.classList.contains('btnGuardarEd')) {
           const item = t.closest('.registroItem');
           const territorioId = item.dataset.territorio;
@@ -3177,14 +3189,16 @@
           const registros = JSON.parse(localStorage.getItem(territorioId + "_capitanes") || "{}");
 
           const nombre = item.querySelector('.inputEditNombre').value.trim();
-          const fecha = item.querySelector('.inputEditFecha').value;
+          const fecha = item.querySelector('.inputEditFecha').value.trim();
+
           if (!nombre) { alert("Nombre vacío"); return; }
 
-          // Si no se modificó la fecha, conservar la anterior
-          const textoPrev = registros[polId][index];
+          // Recuperar la entrada previa
+          const textoPrev = registros[polId][index] || "";
           const notaPrev = textoPrev.split('| Comentario:')[1]?.trim() || "";
           const fechaAnterior = (textoPrev.split('| Fecha:')[1] || "").split('| Comentario:')[0]?.trim() || "";
 
+          // Si no hay nueva fecha, se conserva la anterior
           let fechaFmt = fechaAnterior;
           if (fecha) {
             const [y, m, d] = fecha.split('-');
