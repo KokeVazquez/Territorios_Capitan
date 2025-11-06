@@ -2809,32 +2809,19 @@
       document.body.appendChild(overlay);
       const contLista = overlay.querySelector("#listaRegistros");
 
-      // ---------- Btn para VISITA S.C. ----------
-      let mostrandoVisitas = false; // bandera para saber si ya se muestran las visitas
-      let respaldoLista = ""; // para guardar temporalmente el contenido original
+      // ---------- Btn para VISITA S.C. (reemplaza tu bloque anterior) ----------
+      let mostrandoVisitas = false;
+      const btnVisita = overlay.querySelector("#btnVisitaSC");
 
-      document.getElementById("btnVisitaSC").addEventListener("click", () => {
-        const listaRegistros = document.getElementById("listaRegistros");
-
-        // Si ya estamos mostrando visitas, volvemos al menú normal
-        if (mostrandoVisitas) {
-          listaRegistros.innerHTML = respaldoLista; // restaurar vista original
-          document.getElementById("btnVisitaSC").textContent = "Visita S.C.";
-          mostrandoVisitas = false;
-          return;
-        }
-
-        // Guardar la vista actual antes de cambiarla
-        respaldoLista = listaRegistros.innerHTML;
-
+      // Función que busca y muestra visitas agrupadas por mes
+      function mostrarVisitasEnLista() {
+        const listaRegistros = contLista;
         listaRegistros.innerHTML = "<p style='text-align:center;color:#555;'>Buscando visitas...</p>";
 
-        // Recorrer todo el localStorage y buscar registros con "VisitaSC:"
         const resultados = [];
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i);
-          if (!key.endsWith("_capitanes")) continue;
-
+          if (!key || !key.endsWith("_capitanes")) continue;
           try {
             const registrosPorPol = JSON.parse(localStorage.getItem(key));
             Object.entries(registrosPorPol).forEach(([polId, arr]) => {
@@ -2853,7 +2840,7 @@
                 }
               });
             });
-          } catch (e) { }
+          } catch (e) { /* ignora entradas corruptas */ }
         }
 
         if (!resultados.length) {
@@ -2861,7 +2848,7 @@
           return;
         }
 
-        // Agrupar por mes
+        // Agrupar por mes y renderizar (misma vista que te gustó)
         const porMes = {};
         resultados.forEach(r => {
           if (!porMes[r.mes]) porMes[r.mes] = [];
@@ -2872,23 +2859,32 @@
           .map(([mes, items]) => `
       <div style="margin-bottom:15px;">
         <h3 style="margin:6px 0;color:#0ea5a4;">📅 Visita S.C. - ${mes}</h3>
-        ${items
-              .map(r => `
+        ${items.map(r => `
             <div style="background:#f8f8f8;border-radius:8px;padding:8px;margin:4px 0;">
               <strong>${r.territorio}</strong> | Cuadra: ${r.polId.replace(/.*Cuadra(\d+).*/i, "$1")}
               <br>👤 Capitán: <b>${r.capitan}</b> 
               <br>🗓️ Fecha: ${r.fecha}
             </div>
-          `)
-              .join("")}
+        `).join("")}
       </div>
-    `)
-          .join("");
+    `).join("");
+      }
 
-        // Actualizar estado
-        document.getElementById("btnVisitaSC").textContent = "Volver";
+      // Listener del botón (usa el botón dentro del overlay para evitar listeners globales)
+      btnVisita.addEventListener("click", () => {
+        if (mostrandoVisitas) {
+          // Volver al modo normal: regenerar la lista para restaurar eventos
+          cargarRegistrosEnLista();
+          btnVisita.textContent = "📅 Visita S.C.";
+          mostrandoVisitas = false;
+          return;
+        }
+        // Mostrar visitas y cambiar estado
+        mostrarVisitasEnLista();
+        btnVisita.textContent = "Volver";
         mostrandoVisitas = true;
       });
+
 
 
 
@@ -2957,11 +2953,24 @@
 
             // Crear encabezado con icono minimalista (🗒 reemplazado por ícono estilo bloc)
             let headerHTML = `
-    <div class="territorioHeader" style="background:#eee;padding:10px;cursor:pointer;font-weight:bold;display:flex;align-items:center;justify-content:space-between;">
-      <span>📍 Territorio ${tIndex + 1}</span>
+  <div class="territorioHeader" 
+       style="background:#eee;padding:10px;cursor:pointer;font-weight:bold;
+              display:flex;align-items:center;justify-content:space-between;position:relative;">
+    <span>📍 Territorio ${tIndex + 1}</span>
+    <div style="display:flex;align-items:center;gap:8px;">
       ${hayComentario ? `<span class="iconoNota" style="color:#555;font-size:16px;cursor:pointer;" title="Ver notas">🗒</span>` : ""}
+      <button class="btnBorrarTerritorio" 
+        data-territorio="${territorio._id}" 
+        style="background:none;color:#fff;border:none;border-radius:4px;
+               padding:1px 1px;cursor:pointer;font-size:10px;">
+        ❌
+      </button>
     </div>
-  `;
+  </div>
+`;
+
+
+
 
             // Insertar acordeón con el encabezado y contenido
             contLista.insertAdjacentHTML('beforeend', `
@@ -2970,6 +2979,25 @@
       <div class="territorioContent" style="display:none;padding:10px;">${registrosHTML}</div>
     </div>
   `);
+            // === Botón eliminar territorio completo ===
+            const ultimoAccordion = contLista.lastElementChild;
+            const btnBorrarTerr = ultimoAccordion.querySelector('.btnBorrarTerritorio');
+
+            btnBorrarTerr.addEventListener('click', (e) => {
+              e.stopPropagation(); // Evita que se despliegue el acordeón al borrar
+              const id = e.target.dataset.territorio;
+
+              if (!confirm(`¿Seguro que deseas eliminar *todo* el Territorio ${tIndex + 1}?`)) return;
+
+              // Borrar todos los registros y comentarios asociados
+              localStorage.removeItem(id + "_capitanes");
+              localStorage.removeItem(id + "_comentario");
+
+              // Quitar visualmente del DOM
+              ultimoAccordion.remove();
+
+              alert(`Territorio ${tIndex + 1} eliminado correctamente.`);
+            });
 
             // === Evento al hacer clic en el ícono de nota ===
             if (hayComentario) {
