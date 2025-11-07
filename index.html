@@ -453,15 +453,15 @@
 
 
   .etiquetaTerritorio {
-    background: none;
+    background: transparent !important;
     border-radius: 50%;
     padding: 5px 1px;
     font-weight: bold;
     font-size: 20px;
     color: black;
     text-align: center;
-    pointer-events: none;
-    box-shadow: 0 0px 0px black;
+    pointer-events: none !important;
+    box-shadow: none !important;
   }
 
   /* ✅ Evitar zoom automático en Safari (iPhone) */
@@ -2655,7 +2655,7 @@
 
 
     // ===============================
-    // === MOSTRAR UBICACIÓN MANUALMENTE + ACTIVAR ÁREA GRANDE ===
+    // === MOSTRAR Y ACTUALIZAR UBICACIÓN SIN CENTRAR MAPA ===
     // ===============================
 
     let marcadorUbicacion = null;
@@ -2664,15 +2664,13 @@
 
     function activarUbicacion() {
       const btnUbicacion = document.getElementById("btnUbicacion");
-      const btnAreaGrande = document.getElementById("btnAreaGrande"); // tu botón de área grande
 
       if (!navigator.geolocation) {
-        alert("Tu navegador no soporta geolocalización. Bienvenido al pasado.");
+        alert("Tu navegador no soporta geolocalización.");
         return;
       }
 
       if (seguimientoActivo) {
-        // Si ya está activo, desactiva ubicación
         navigator.geolocation.clearWatch(watchId);
         seguimientoActivo = false;
         btnUbicacion.innerText = "📍";
@@ -2680,15 +2678,10 @@
           map.removeLayer(marcadorUbicacion);
           marcadorUbicacion = null;
         }
-
-        // Activar automáticamente el botón de área grande
-        if (btnAreaGrande) btnAreaGrande.click();
-
         return;
       }
 
-      // Activar seguimiento de ubicación
-      seguimientoActivo = true;
+      seguimientoActivo = false;
       btnUbicacion.innerText = "❌";
 
       watchId = navigator.geolocation.watchPosition(
@@ -2699,10 +2692,11 @@
           if (marcadorUbicacion) {
             marcadorUbicacion.setLatLng([lat, lon]);
           } else {
-            marcadorUbicacion = L.marker([lat, lon]).addTo(map).openPopup();
+            marcadorUbicacion = L.marker([lat, lon]).addTo(map).bindPopup("Tu ubicación");
           }
 
-          map.setView([lat, lon], 17);
+          // OJO: aquí ya no movemos el mapa automáticamente
+          // map.setView([lat, lon], 17);
         },
         function (err) {
           alert("Error al obtener ubicación: " + err.message);
@@ -2712,7 +2706,6 @@
       );
     }
 
-    // Conectar el botón con la función
     document.getElementById("btnUbicacion").addEventListener("click", activarUbicacion);
 
 

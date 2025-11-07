@@ -47,6 +47,7 @@ function crearTerritorio(datosTerritorio) {
     if (d.label) pol._label = d.label;
   });
 
+
   // ------------------------------
   // 4. Agregar a la lista global
   // ------------------------------
